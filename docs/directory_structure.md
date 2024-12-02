@@ -1,0 +1,37 @@
+### Root/
+  - [directory_structure.py](#directory_structure_py)
+  - [index.php](#index_php)
+  - [LICENSE.txt](#license_txt)
+  - [owlthslider.php](#owlthslider_php)
+  - [php_functionality_structure.md](#php_functionality_structure_md)
+  - [php_functions.py](#php_functions_py)
+  - [README.txt](#readme_txt)
+  - [uninstall.php](#uninstall_php)
+### admin/
+  - [class-owlthslider-admin.php](#class-owlthslider-admin_php)
+  - [index.php](#index_php)
+### admin\css/
+  - [owlthslider-admin.css](#owlthslider-admin_css)
+### admin\js/
+  - [owlthslider-admin.js](#owlthslider-admin_js)
+### admin\partials/
+  - [owlthslider-admin-display.php](#owlthslider-admin-display_php)
+### docs/
+### includes/
+  - [class-owlthslider-activator.php](#class-owlthslider-activator_php)
+  - [class-owlthslider-deactivator.php](#class-owlthslider-deactivator_php)
+  - [class-owlthslider-i18n.php](#class-owlthslider-i18n_php)
+  - [class-owlthslider-loader.php](#class-owlthslider-loader_php)
+  - [class-owlthslider.php](#class-owlthslider_php)
+  - [index.php](#index_php)
+### languages/
+  - [owlthslider.pot](#owlthslider_pot)
+### public/
+  - [class-owlthslider-public.php](#class-owlthslider-public_php)
+  - [index.php](#index_php)
+### public\css/
+  - [owlthslider-public.css](#owlthslider-public_css)
+### public\js/
+  - [owlthslider-public.js](#owlthslider-public_js)
+### public\partials/
+  - [owlthslider-public-display.php](#owlthslider-public-display_php)
