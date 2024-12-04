@@ -1,3 +1,7 @@
+import '../css/owlthslider-public.css';
+import './slider';
+import './parallax';
+
 (function( $ ) {
 	'use strict';
 

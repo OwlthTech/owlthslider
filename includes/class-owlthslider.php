@@ -57,6 +57,8 @@ class Owlthslider {
 	 */
 	protected $version;
 
+	protected $plugin_dir;
+
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -73,8 +75,15 @@ class Owlthslider {
 		} else {
 			$this->version = '1.0.0';
 		}
+		
 		$this->plugin_name = 'owlthslider';
 
+		if( defined(OWLTHSLIDER_PLUGIN_DIR)) {
+			$this->plugin_dir = OWLTHSLIDER_PLUGIN_DIR;	
+		} else {
+			$this->plugin_dir = WP_PLUGIN_DIR . '/' . $this->plugin_name;
+		}
+		
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
@@ -116,6 +125,7 @@ class Owlthslider {
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-owlthslider-admin.php';
+		
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
@@ -155,10 +165,15 @@ class Owlthslider {
 
 		$plugin_admin = new Owlthslider_Admin( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles_scripts' );
+		
+		// Register CPT & Taxonomies
+		$this->loader->add_action('init', $plugin_admin,  'os_register_slider_cpt_and_taxonomy');
+		
+		// Slider type - on new slider creation
+		$this->loader->add_action('admin_init', $plugin_admin, 'os_redirect_new_slider_to_type_selection');
 		$this->loader->add_action('admin_menu', $plugin_admin, 'os_add_slider_type_selection_page');
-
+		
 	}
 
 	/**
@@ -172,8 +187,7 @@ class Owlthslider {
 
 		$plugin_public = new Owlthslider_Public( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles_scripts' );
 
 	}
 

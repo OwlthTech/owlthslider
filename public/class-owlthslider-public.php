@@ -20,20 +20,21 @@
  * @subpackage Owlthslider/public
  * @author     Owlth Tech <nil@owlth.tech>
  */
-class Owlthslider_Public {
+class Owlthslider_Public
+{
 
 
 	private $plugin_name;
 
 	private $version;
 
-	public function __construct( $plugin_name, $version ) {
+	public function __construct($plugin_name, $version)
+	{
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 		add_filter('the_content', array($this, 'os_enqueue_assets_if_slider_shortcode'));
 		add_filter('the_content', array($this, 'os_render_slider_in_preview'));
 		add_shortcode('os_slider', array($this, 'os_slider_shortcode'));
-	
 	}
 
 	/**
@@ -41,66 +42,56 @@ class Owlthslider_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/owlthslider-public.css', array(), $this->version, 'all' );
-		if (is_preview() && get_post_type() === 'os_slider' && is_dir(plugin_dir_url(__FILE__) . 'build')) {
-			wp_enqueue_script('owlthslider-js', OS_PLUGIN_URL . 'build/frontend/js/owlthslider.min.js', array(), OS_PLUGIN_VERSION, true);
+	public function enqueue_styles_scripts()
+	{
+		if (is_preview() && get_post_type() === 'os_slider' && is_dir(OWLTHSLIDER_PLUGIN_DIR . 'build/public/')) {
+
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/public/css/owlthslider.min.css', array(), OWLTHSLIDER_VERSION, 'all');
+			wp_enqueue_script($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/public/js/owlthslider.min.js', array(), OWLTHSLIDER_VERSION, true);
+
 		}
 	}
 
 	/**
-	 * Register the JavaScript for the public-facing side of the site.
+	 * Enqueue scripts and styles if the [os_slider] shortcode is present in the content.
 	 *
-	 * @since    1.0.0
+	 * @param string $content The content of the post.
+	 * @return string Modified post content.
 	 */
-	public function enqueue_scripts() {
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/owlthslider-public.js', array( 'jquery' ), $this->version, false );
-		if (is_preview() && get_post_type() === 'os_slider' && is_dir(plugin_dir_url(__FILE__) . 'build')) {
-			wp_enqueue_script('owlthslider-js', OS_PLUGIN_URL . 'build/frontend/js/owlthslider.min.js', array(), OS_PLUGIN_VERSION, true);
+	public function os_enqueue_assets_if_slider_shortcode($content)
+	{
+		if (has_shortcode($content, 'os_slider')) {
+			wp_enqueue_script($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'public/js/owlthslider.min.js', array('jquery'), OWLTHSLIDER_VERSION, false);
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'public/css/owlthslider-public.css', array(), OWLTHSLIDER_VERSION, 'all');
 		}
+
+		return $content;
 	}
 
 	/**
- * Enqueue scripts and styles if the [os_slider] shortcode is present in the content.
- *
- * @param string $content The content of the post.
- * @return string Modified post content.
- */
-public function os_enqueue_assets_if_slider_shortcode($content)
-{
-    if (has_shortcode($content, 'os_slider')) {
-        // Enqueue script and style only if the [os_slider] shortcode is found
-        wp_enqueue_script('owlthslider-js', OS_PLUGIN_URL . 'build/frontend/js/owlthslider.min.js', array(), OS_PLUGIN_VERSION, true);
-        wp_enqueue_style('owlthslider-css', OS_PLUGIN_URL . 'build/frontend/css/owlthslider.min.css', array(), OS_PLUGIN_VERSION, 'all');
-    }
+	 * Render the actual slider shortcode when previewing an os_slider post.
+	 *
+	 * @param string $content The original post content.
+	 * @return string Modified post content with the slider shortcode output.
+	 */
+	public function os_render_slider_in_preview($content)
+	{
+		global $post;
 
-    return $content;
-}
+		// Check if it's a preview, the post type is 'os_slider', and we're viewing in admin or front-end preview
+		if (is_preview() && $post && $post->post_type === 'os_slider') {
+			// Generate the shortcode for the current slider
+			$shortcode = '[os_slider id="' . $post->ID . '"]';
 
-/**
- * Render the actual slider shortcode when previewing an os_slider post.
- *
- * @param string $content The original post content.
- * @return string Modified post content with the slider shortcode output.
- */
-public function os_render_slider_in_preview($content)
-{
-    global $post;
+			// Render the slider using the shortcode and return the content
+			$slider_output = do_shortcode($shortcode);
 
-    // Check if it's a preview, the post type is 'os_slider', and we're viewing in admin or front-end preview
-    if (is_preview() && $post && $post->post_type === 'os_slider') {
-        // Generate the shortcode for the current slider
-        $shortcode = '[os_slider id="' . $post->ID . '"]';
+			// Replace the original content with the rendered slider
+			return $slider_output;
+		}
 
-        // Render the slider using the shortcode and return the content
-        $slider_output = do_shortcode($shortcode);
-
-        // Replace the original content with the rendered slider
-        return $slider_output;
-    }
-
-    return $content;
-}
+		return $content;
+	}
 
 	/**
 	 * Public: Shortcode Rendering
@@ -121,20 +112,20 @@ public function os_render_slider_in_preview($content)
 		$slider_data = get_post_meta($post_id, '_os_slider_data', true);
 		$slider_data = is_array($slider_data) ? $slider_data : array();
 
-		error_log(print_r("owlthslider:" . $slider_data, true));
-		error_log(print_r($slider_data, true));
 		if (empty($slider_data)) {
 			return ''; // No slider data found.
 		}
 
 		// Slider settings
-		$slider_type = get_post_meta($post_id, '_os_slider_type', true);
+		$slider_options = get_post_meta($post_id, '_os_slider_options', true);
+
+		$slider_type = $slider_options['os_slider_autoplay'] == 'yes' ? 'autoplay' : '';
 		$autoplay_duration = get_post_meta($post_id, '_os_slider_autoplay_duration', true);
 		$autoplay_delay = get_post_meta($post_id, '_os_slider_autoplay_delay', true);
 
 		ob_start();
 		?>
-		<div class="os-slider embla" <?php echo (($slider_type === 'autoplay')) ? ' data-autoplay="yes"' : 'data-autoscroll="yes"'; ?> 		<?php echo (isset($autoplay_duration) && !empty($autoplay_duration)) ? ' data-duration="' . $autoplay_duration . '"' : ''; ?> 		<?php echo (isset($autoplay_delay) && !empty($autoplay_delay)) ? ' data-delay="' . $autoplay_delay . '"' : ''; ?> data-loop="true">
+		<div class="os-slider embla" <?php echo (($slider_type === 'autoplay')) ? ' data-autoplay="yes"' : 'data-autoscroll="yes"'; ?> data-loop="true">
 			<div class="os-slider__viewport">
 				<div class="os-slider__container">
 					<?php foreach ($slider_data as $data): ?>

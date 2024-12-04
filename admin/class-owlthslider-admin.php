@@ -21,7 +21,12 @@
  * @author     Owlth Tech <nil@owlth.tech>
  */
 
-require_once plugin_dir_path(__FILE__) . 'functions/index.php';
+
+require_once plugin_dir_path(__FILE__) . 'functions/slider/index.php';
+require_once plugin_dir_path(__FILE__) . 'functions/reviews/index.php';
+
+// Metaboxes
+require_once plugin_dir_path(dirname(__FILE__)) . 'admin/includes/class-owlthslider-metaboxes.php';
 
 class Owlthslider_Admin
 {
@@ -29,27 +34,30 @@ class Owlthslider_Admin
 
 	private $version;
 
-
+	private $plugin_metaboxes;
 	public function __construct($plugin_name, $version)
 	{
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
-		add_action('wp_ajax_os_auto_save_sliders', array($this, 'os_auto_save_sliders'));
-		add_action('save_post_os_slider', array($this, 'os_slider_save_meta_fields'));
-		// add_action('admin_init', array($this, 'os_redirect_new_slider_to_type_selection'));
-		// add_action('admin_menu', array($this, 'os_add_slider_type_selection_page'));
+		add_action('wp_ajax_os_auto_save_sliders', 'os_save_data_ajax');
+		add_action('save_post_os_slider', 'os_save_data');
+
 		add_action('wp_ajax_os_refresh_reviews', array($this, 'os_ajax_refresh_reviews'));
 
 		add_filter('manage_os_slider_posts_columns', array($this, 'os_add_shortcode_column'));
 		add_action('manage_os_slider_posts_custom_column', array($this, 'os_shortcode_column_content'), 10, 2);
 
+		// Metaboxes - remove and add
+		$this->plugin_metaboxes = new Class_Owlthslider_Metaboxes();
+
 	}
 
 
-	public function enqueue_styles($hook)
+	public function enqueue_styles_scripts($hook)
 	{
+		$this->enqueue_page_selection();
 		if (!in_array($hook, ['post.php', 'post-new.php'])) {
 			return;
 		}
@@ -60,112 +68,52 @@ class Owlthslider_Admin
 		}
 
 		// CSS
-		if (is_dir(plugin_dir_path(__FILE__) . 'build')) {
-			wp_enqueue_style('owlthslider-admin', plugin_dir_url(__FILE__) . 'build/admin/css/owlthslider.min.css');
-		}
-		wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/owlthslider-admin.css', array(), $this->version, 'all');
-	}
-
-	public function enqueue_scripts($hook)
-	{
-		if (!in_array($hook, ['post.php', 'post-new.php'])) {
-			return;
+		if (file_exists(OWLTHSLIDER_PLUGIN_DIR . 'build/admin/css/owlthslider.min.css')) {
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/admin/css/owlthslider.min.css', array(), $this->version, 'all');
+		} else {
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'admin/css/owlthslider-admin.css', array(), $this->version, 'all');
 		}
 
-		global $post;
-		if (isset($post->post_type) && $post->post_type != 'os_slider') {
-			return;
-		}
-
+		// JS
 		wp_enqueue_media();
 		wp_enqueue_editor();
 
-		if (is_dir(plugin_dir_path(__FILE__) . 'build')) {
-			wp_enqueue_script('owlth-slider-admin', plugin_dir_url(__FILE__) . 'build/admin/js/owlthslider.min.js', array('jquery'), '1.0', true);
+		if (file_exists(OWLTHSLIDER_PLUGIN_DIR . 'build/admin/js/owlthslider.min.js')) {
+			wp_enqueue_script($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/admin/js/owlthslider.min.js', array('jquery'), $this->version, true);
 		} else {
-			wp_enqueue_script('owlth-slider-admin', plugin_dir_url(__FILE__) . 'js/owlthslider-admin.js', array('jquery'), '1.0', true);
+			wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/owlthslider-admin.js', array('jquery'), $this->version, true);
 		}
-		wp_localize_script('owlth-slider-admin', 'os_slider_params', array(
+		wp_localize_script($this->plugin_name, 'os_slider_params', array(
 			'nonce' => wp_create_nonce('os_save_slider_universal_nonce_action'),
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'post_id' => $post->ID,
+			'slider_schema' => os_get_slider_schema()
 		));
 	}
 
-	/**
-	 * Handle AJAX Auto-Save Slider Data
-	 */
-	public function os_auto_save_sliders()
+	public function enqueue_page_selection()
 	{
-		// Verify the universal nonce
-		if (!isset($_POST['os_slider_universal_nonce']) || !wp_verify_nonce($_POST['os_slider_universal_nonce'], 'os_save_slider_universal_nonce_action')) {
-			wp_send_json_error('Unauthorized nonce verification failed', 403);
+		if ($_SERVER['REQUEST_METHOD'] !== 'GET' || !isset($_GET['page']) || $_GET['page'] !== 'os_slider_type_selection')
 			return;
+		// CSS
+		if (file_exists(OWLTHSLIDER_PLUGIN_DIR . 'build/admin/css/owlthslider.min.css')) {
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/admin/css/owlthslider.min.css', array(), $this->version, 'all');
+		} else {
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'admin/css/owlthslider-admin.css', array(), $this->version, 'all');
 		}
-
-		// Get and sanitize post ID
-		$post_id = intval($_POST['post_id']);
-		if (!$post_id || !current_user_can('edit_post', $post_id)) {
-			wp_send_json_error('Unauthorized user or invalid post ID', 403);
-			return;
-		}
-
-		// Optional: Check if the post exists and is of type 'os_slider'
-		$post = get_post($post_id);
-		if (!$post || $post->post_type !== 'os_slider') {
-			wp_send_json_error('Invalid post type', 400);
-			return;
-		}
-
-		// Parse the slider data
-		if (isset($_POST['slider_data'])) {
-			parse_str($_POST['slider_data'], $slider_data);
-
-			// Save slider data using the unified save function
-			$result = os_save_all_slider_data($post_id, $slider_data);
-
-			if (is_wp_error($result)) {
-				wp_send_json_error($result->get_error_message(), 400);
-				return;
-			}
-		}
-
-		wp_send_json_success('Slider data saved successfully');
 	}
 
+
 	/**
-	 * Handle Normal Save of Slider Meta Fields
-	 *
-	 * @param int $post_id The post ID.
+	 * Register Custom Post Type for Sliders.
 	 */
-	public function os_slider_save_meta_fields($post_id)
+	function os_register_slider_cpt_and_taxonomy()
 	{
-		// Verify the universal nonce
-		if (!isset($_POST['os_slider_universal_nonce']) || !wp_verify_nonce($_POST['os_slider_universal_nonce'], 'os_save_slider_universal_nonce_action')) {
-			return;
-		}
-
-		// Check if auto-saving, do nothing
-		if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-			return;
-		}
-
-		// Check user permissions
-		if (!current_user_can('edit_post', $post_id)) {
-			return;
-		}
-
-		// Collect data from $_POST
-		$data = $_POST;
-
-		// Use the unified save function
-		$result = os_save_all_slider_data($post_id, $data);
-
-		if (is_wp_error($result)) {
-			// Optionally, add an admin notice or log the error
-			error_log('Slider Save Error: ' . $result->get_error_message());
-		}
+		$cpt_slug = 'os_slider';
+		$cpt_taxonomies = ['os_slider_type'];
+		os_register_cpt($cpt_slug, $cpt_taxonomies);
 	}
+
 
 	/**
 	 * Redirect to the slider type selection screen when initializing a new slider.
@@ -174,13 +122,10 @@ class Owlthslider_Admin
 	{
 		global $pagenow;
 
+		if (!isset($_GET['post_type']) || $_GET['post_type'] !== 'os_slider')
+			return;
 		// Check if we are on the add-new page for the 'os_slider' post type
-		if (
-			$pagenow === 'post-new.php' &&
-			isset($_GET['post_type']) &&
-			$_GET['post_type'] === 'os_slider' &&
-			!isset($_GET['slider_type'])
-		) {
+		if ($pagenow === 'post-new.php' && !isset($_GET['slider_type'])) {
 			// Redirect to the type selection screen
 			wp_redirect(admin_url('admin.php?page=os_slider_type_selection'));
 			exit;
@@ -206,9 +151,8 @@ class Owlthslider_Admin
 	/**
 	 * Render the slider type selection page.
 	 */
-	public function os_render_slider_type_selection_page()
+	public function os_render_slider_type_selection_page($hook)
 	{
-		var_dump($_POST);
 		// Handle form submission
 		if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['os_slider_type'])) {
 			// Verify nonce
@@ -262,37 +206,28 @@ class Owlthslider_Admin
 			echo '</div>';
 			return;
 		}
-
-		// Display the type selection form
 		?>
-		<div class="wrap">
+		<div class="wrap" id="slide-selection">
 			<h1><?php _e('Select Slider Type', 'owlthslider'); ?></h1>
 			<form method="post" action="">
 				<?php wp_nonce_field('os_select_slider_type_action', 'os_slider_type_nonce'); ?>
-				<table class="form-table">
-					<tbody>
-						<?php foreach ($slider_types as $type): ?>
-							<tr>
-								<th scope="row">
-									<label for="os_slider_type_<?php echo esc_attr($type->term_id); ?>">
-										<?php echo esc_html($type->name); ?>
-									</label>
-								</th>
-								<td>
-									<input type="radio" id="os_slider_type_<?php echo esc_attr($type->term_id); ?>"
-										name="os_slider_type" value="<?php echo esc_attr($type->term_id); ?>" required />
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
+				<div class="slider-types">
+					<?php foreach ($slider_types as $type): ?>
+						<label class="form-control" for="os_slider_type_<?php echo esc_attr($type->term_id); ?>">
+							<input type="radio" id="os_slider_type_<?php echo esc_attr($type->term_id); ?>" name="os_slider_type"
+								value="<?php echo esc_attr($type->term_id); ?>" required />
+							<span><?php echo esc_html($type->name); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
 				<?php submit_button(__('Create Slider', 'owlthslider')); ?>
 			</form>
 		</div>
+
 		<?php
 	}
 
-	
+
 	/**
 	 * Admin: Adds column in post table
 	 * @param mixed $columns
@@ -318,8 +253,6 @@ class Owlthslider_Admin
 			echo '<input type="text" readonly="readonly" value="' . esc_attr($shortcode) . '" class="os-slider-shortcode" onclick="this.select();document.execCommand(\'copy\');alert(\'Shortcode copied to clipboard\');" />';
 		}
 	}
-
-
 
 
 	/**
@@ -349,10 +282,10 @@ class Owlthslider_Admin
 
 		// Delete existing transient to force re-fetch
 		$transient_key = 'owlth_google_reviews_' . md5($google_place_id);
-		delete_transient($transient_key);
+		// delete_transient($transient_key);
 
 		// Fetch fresh reviews
-		$reviews = owlth_fetch_google_reviews($google_place_id);
+		$reviews = os_fetch_google_reviews($google_place_id, true);
 
 		if (empty($reviews)) {
 			wp_send_json_error(__('No reviews found or failed to fetch reviews.', 'owlthslider'), 400);
@@ -360,27 +293,10 @@ class Owlthslider_Admin
 
 		// Render the updated reviews table
 		ob_start();
-		os_render_reviews_table($post_id, $google_place_id);
+		$this->plugin_metaboxes->os_render_reviews_table($post_id, $google_place_id, true);
 		$table_html = ob_get_clean();
 
 		wp_send_json_success($table_html);
 	}
 
-
 }
-
-
-
-
-// Template row for adding new rows
-if (!function_exists('render_table_row_template')):
-	function render_table_row_template()
-	{
-		ob_start();
-		render_table_rows('index_count');
-		return ob_get_clean();
-	}
-endif;
-
-
-

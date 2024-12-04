@@ -7,23 +7,25 @@
  *
  * @return array An array of reviews or an empty array on failure.
  */
-function os_fetch_google_reviews( $google_place_id ) {
+function os_fetch_google_reviews( $google_place_id, $refresh = false ) {
     if ( empty( $google_place_id ) ) {
         $google_place_id = ORGOTEL_PLACES_ID;
     }
 
     // Generate a unique transient key for caching the reviews.
     $transient_key   = 'owlth_google_reviews_' . md5( $google_place_id );
+    // delete_transient($transient_key);
     $cached_reviews = get_transient( $transient_key );
     if ( false === $cached_reviews && ! is_wp_error( $cached_reviews ) ) {
         error_log( 'Failed to retrieve transient for Google reviews. Transient key: ' . $transient_key );
     }
 
     // If cached reviews exist, return them.
-    if ( false !== $cached_reviews ) {
+    if ( false !== $cached_reviews && $refresh === false ) {
         return $cached_reviews;
     }
 
+    error_log('calling api');
     // Build the API request URL.
     $api_url = add_query_arg( array(
         'place_id' => $google_place_id,
@@ -64,7 +66,7 @@ function os_fetch_google_reviews( $google_place_id ) {
     }
 
     // Cache profile photos
-    $images_dir = plugin_dir_path( __FILE__ ) . 'images/';
+    $images_dir = OWLTHSLIDER_PLUGIN_DIR . '/review-images/';
     if ( ! file_exists( $images_dir ) ) {
         mkdir( $images_dir, 0755, true );
     }

@@ -35,8 +35,9 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'OWLTHSLIDER_VERSION', '1.0.0' );
-
+define( 'OWLTHSLIDER_VERSION', '1.0.1' );
+define( 'OWLTHSLIDER_PLUGIN_DIR', plugin_dir_path( __FILE__) );
+define('OWLTHSLIDER_PLUGIN_URL' , plugin_dir_url( __FILE__ ));
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-owlthslider-activator.php
