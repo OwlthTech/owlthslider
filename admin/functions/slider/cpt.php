@@ -90,11 +90,11 @@ function os_register_taxonomy($cpt_slug, $cpt_taxonomies) {
 function os_register_meta() {
     // Merge the schemas for both slider data and slider options
     $schemas = array_merge(new_os_get_slider_schema(), new_os_get_slider_options_schema());
-    $post_type = 'os_slider'; // Your custom post type
+    $custom_post_type = 'os_slider'; // Your custom post type
 
     foreach ($schemas as $key => $field) {
-        register_post_meta(
-            $post_type,
+        register_meta(
+            'post',
             $field['meta_key'],
             array(
                 'type'              => $field['type'],
@@ -103,6 +103,7 @@ function os_register_meta() {
                 // 'sanitize_callback' => $field['sanitize_callback'],
                 // 'validate_callback' => $field['validate_callback'],
                 'show_in_rest'      => $field['show_in_rest'],
+                'object_subtype'    => $custom_post_type
             )
         );
     }
@@ -340,5 +341,5 @@ function new_update_slider_via_rest_api() {
 }
 
 // Example of triggering the update function
-add_action('admin_init', 'new_update_slider_via_rest_api');
+// add_action('admin_init', 'new_update_slider_via_rest_api');
 
