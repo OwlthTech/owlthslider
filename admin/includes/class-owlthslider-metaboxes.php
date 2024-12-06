@@ -50,145 +50,6 @@ class Class_Owlthslider_Metaboxes
     }
 
     /**
-     * Admin: slider table mextabox callback
-     * @param mixed $post
-     * @return void
-     */
-    function os_slider_render_table($post)
-    {
-        // Add nonce field for security.
-        wp_nonce_field('os_save_slider_universal_nonce_action', 'os_slider_universal_nonce');
-
-        $slider_data = get_post_meta($post->ID, '_os_slider_data', true);
-        $slider_data = is_array($slider_data) ? $slider_data : array();
-
-        if (empty($slider_data)) {
-            $slider_data[] = array(
-                'enabled' => 'yes',
-                'heading' => '',
-                'caption' => '',
-                'background_image' => '',
-                'cta_text' => '',
-                'cta_link' => ''
-            );
-        }
-        ?>
-        <table class="form-table" id="os-slider-table">
-            <thead>
-                <tr>
-                    <th class="cb-column"><?php _e('Enable', 'owlthslider'); ?></th>
-                    <th class="heading-column"><?php _e('Heading', 'owlthslider'); ?></th>
-                    <th class="caption-column"><?php _e('Caption Description', 'owlthslider'); ?></th>
-                    <th class="image-column"><?php _e('Background Image', 'owlthslider'); ?></th>
-                    <th class="cta-column"><?php _e('CTA Button Text', 'owlthslider'); ?></th>
-                    <th class="action-column"><?php _e('Actions', 'owlthslider'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($slider_data as $index => $data): ?>
-                    <?php echo render_table_rows($index, $data); ?>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        <p>
-            <button type="button" class="button button-primary" id="add-slider-row">Add New Row</button>
-        </p>
-
-        <script type="text/template" id="table-row-template"><?php echo render_table_row_template(); ?></script>
-
-        <?php
-    }
-
-
-    /**
-     * Render metabox for Reviews Slider Settings.
-     *
-     * @param WP_Post $post The post object.
-     */
-    function os_slider_render_reviews_settings($post)
-    {
-        // Add nonce field for security
-        wp_nonce_field('os_save_slider_universal_nonce_action', 'os_slider_universal_nonce');
-
-        // Retrieve existing options or set defaults
-        $options = get_post_meta($post->ID, '_os_slider_options', true);
-        $options = is_array($options) ? $options : array();
-
-        // Set default values for reviews slider options
-        $defaults = array(
-            'os_slider_google_place_id' => ORGOTEL_PLACES_ID,
-        );
-        $options = wp_parse_args($options, $defaults);
-
-        // Display the Google Place ID field
-        ?>
-        <p>
-            <label for="os_slider_google_place_id"><?php _e('Google Place ID', 'owlthslider'); ?></label><br />
-            <input type="text" id="os_slider_google_place_id" name="os_slider_options[os_slider_google_place_id]"
-                value="<?php echo esc_attr($options['os_slider_google_place_id']); ?>" required />
-        </p>
-        <p>
-            <button type="button" class="button" id="os_refresh_reviews"><?php _e('Refresh Reviews', 'owlthslider'); ?></button>
-        </p>
-        <hr />
-        <h4><?php _e('Fetched Reviews', 'owlthslider'); ?></h4>
-        <div id="os_reviews_table_container">
-            <?php $this->os_render_reviews_table($post->ID, $options['os_slider_google_place_id']); ?>
-        </div>
-
-        <?php
-    }
-
-    /**
-     * Render the reviews table in the metabox.
-     *
-     * @param int    $post_id        The post ID.
-     * @param string $google_place_id The Google Place ID.
-     */
-    function os_render_reviews_table($post_id, $google_place_id, $refresh = false)
-    {
-
-        $google_place_id = (isset($google_place_id) && !empty($google_place_id)) ? $google_place_id : ORGOTEL_PLACES_ID;
-
-        // Generate a unique transient key for caching the reviews.
-        $transient_key = 'owlth_google_reviews_' . md5($google_place_id);
-        // delete_transient($transient_key);
-        $reviews = os_fetch_google_reviews($google_place_id, $refresh);
-
-        if (!isset($reviews) || empty($reviews)) {
-            echo '<p>' . __('No reviews found or failed to fetch reviews.', 'owlthslider') . '</p>';
-            return;
-        }
-
-        echo '<table class="widefat fixed" cellspacing="0">';
-        echo '<thead>';
-        echo '<tr>';
-        echo '<th>' . __('Reviewer', 'owlthslider') . '</th>';
-        echo '<th>' . __('Rating', 'owlthslider') . '</th>';
-        echo '<th>' . __('Review', 'owlthslider') . '</th>';
-        echo '<th>' . __('Date', 'owlthslider') . '</th>';
-        echo '</tr>';
-        echo '</thead>';
-        echo '<tbody>';
-
-        foreach ($reviews as $review) {
-            $reviewer = esc_html($review->author_name);
-            $rating = intval($review->rating);
-            $comment = esc_html($review->text);
-            $date = esc_html(date_i18n(get_option('date_format'), strtotime($review->time)));
-            echo '<tr>';
-            echo '<td>' . $reviewer . '</td>';
-            echo '<td>' . $rating . '</td>';
-            echo '<td>' . $comment . '</td>';
-            echo '<td>' . $date . '</td>';
-            echo '</tr>';
-        }
-
-        echo '</tbody>';
-        echo '</table>';
-    }
-
-    /**
      * Render Slider Settings Metabox
      *
      * @param WP_Post $post The post object.
@@ -199,7 +60,7 @@ class Class_Owlthslider_Metaboxes
         wp_nonce_field('os_save_slider_universal_nonce_action', 'os_slider_universal_nonce');
 
         // Retrieve existing options from post meta.
-        $options = get_post_meta($post->ID, '_os_slider_options', true);
+        $options = get_post_meta($post->ID, 'os_slider_options', true);
         $options = is_array($options) ? $options : array();
 
         // Set default values if not set.
@@ -382,13 +243,15 @@ class Class_Owlthslider_Metaboxes
             'hide_empty' => false,
         ));
 
+        
         // Get currently selected category.
-        $selected_category = wp_get_post_terms($post->ID, 'os_slider_type', array('fields' => 'ids'));
+        $selected_category = wp_get_post_terms($post->ID, 'os_slider_type', array('fields' => 'slugs'));
+        // var_dump($selected_category);
 
         // If no category is selected, set the default to 'Default'.
         if (empty($selected_category)) {
-            $default_category = get_term_by('name', 'Default', 'os_slider_type');
-            $selected_category = $default_category ? array($default_category->term_id) : array();
+            $default_category = get_term_by('slug', 'default', 'os_slider_type');
+            $selected_category = $default_category ? array($default_category->slug) : array();
         }
 
         // Render categories as radio buttons.
@@ -396,13 +259,65 @@ class Class_Owlthslider_Metaboxes
         foreach ($categories as $category) {
             echo '<li>';
             echo '<label>';
-            echo '<input type="radio" name="os_slider_type" value="' . esc_attr($category->term_id) . '" ' . checked(!empty($selected_category) && in_array($category->term_id, $selected_category), true, false) . ' />';
+            echo '<input type="radio" name="os_slider_type" value="' . esc_attr($category->slug) . '" ' . checked(!empty($selected_category) && in_array($category->slug, $selected_category), true, false) . ' />';
             echo esc_html($category->name);
             echo '</label>';
             echo '</li>';
         }
         echo '</ul>';
     }
+}
+
+
+
+/**
+ * Admin: slider table mextabox callback
+ * @param mixed $post
+ * @return void
+ */
+function os_slider_render_table($post)
+{
+    // Add nonce field for security.
+    wp_nonce_field('os_save_slider_universal_nonce_action', 'os_slider_universal_nonce');
+
+    $slider_data = get_post_meta($post->ID, '_os_slider_data', true);
+    $slider_data = is_array($slider_data) ? $slider_data : array();
+
+    if (empty($slider_data)) {
+        $slider_data[] = array(
+            'enabled' => 'yes',
+            'heading' => '',
+            'caption' => '',
+            'background_image' => '',
+            'cta_text' => '',
+            'cta_link' => ''
+        );
+    }
+    ?>
+    <table class="form-table" id="os-slider-table">
+        <thead>
+            <tr>
+                <th class="cb-column"><?php _e('Enable', 'owlthslider'); ?></th>
+                <th class="heading-column"><?php _e('Heading', 'owlthslider'); ?></th>
+                <th class="caption-column"><?php _e('Caption Description', 'owlthslider'); ?></th>
+                <th class="image-column"><?php _e('Background Image', 'owlthslider'); ?></th>
+                <th class="cta-column"><?php _e('CTA Button Text', 'owlthslider'); ?></th>
+                <th class="action-column"><?php _e('Actions', 'owlthslider'); ?></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($slider_data as $index => $data): ?>
+                <?php echo render_table_rows($index, $data); ?>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <p>
+        <button type="button" class="button button-primary" id="add-slider-row">Add New Row</button>
+    </p>
+
+    <script type="text/template" id="table-row-template"><?php echo render_table_row_template(); ?></script>
+
+    <?php
 }
 
 
@@ -417,10 +332,10 @@ function render_table_rows($index, $data = [])
     ?>
     <tr>
         <td class=""><input type="checkbox" name="os_slider_data[<?php echo $index; ?>][enabled]" value="yes" <?php checked($enabled, 'yes'); ?> /></td>
-        
+
         <td class="heading-column"><input type="text" name="os_slider_data[<?php echo $index; ?>][heading]"
                 value="<?php echo $heading; ?>" size="20" /></td>
-        
+
         <td class="caption-column">
             <?php
             wp_editor(
@@ -445,7 +360,6 @@ function render_table_rows($index, $data = [])
                         style="<?php echo ($image != '') ? 'aspect-ratio:16:9' : ''; ?>" />
                     <button type="button" class="button slider-remove-image">&times;</button>
                 </div>
-
             <?php endif; ?>
             <button type="button" class="upload-button button-add-media button-add-site-icon slider-select-image"
                 style="aspect-ratio:16:9;<?php echo !empty($image) ? 'display:none' : ''; ?>">Background Image</button>
@@ -472,10 +386,101 @@ function render_table_rows($index, $data = [])
 
 // Template row for adding new rows
 if (!function_exists('render_table_row_template')):
-	function render_table_row_template()
-	{
-		ob_start();
-		render_table_rows('index_count');
-		return ob_get_clean();
-	}
+    function render_table_row_template()
+    {
+        ob_start();
+        render_table_rows('index_count');
+        return ob_get_clean();
+    }
 endif;
+
+
+
+
+/**
+ * Render metabox for Reviews Slider Settings.
+ *
+ * @param WP_Post $post The post object.
+ */
+function os_slider_render_reviews_settings($post)
+{
+    // Add nonce field for security
+    wp_nonce_field('os_save_slider_universal_nonce_action', 'os_slider_universal_nonce');
+
+    // Retrieve existing options or set defaults
+    $options = get_post_meta($post->ID, '_os_slider_options', true);
+    $options = is_array($options) ? $options : array();
+
+    // Set default values for reviews slider options
+    $defaults = array(
+        'os_slider_google_place_id' => ORGOTEL_PLACES_ID,
+    );
+    $options = wp_parse_args($options, $defaults);
+
+    // Display the Google Place ID field
+    ?>
+    <p>
+        <label for="os_slider_google_place_id"><?php _e('Google Place ID', 'owlthslider'); ?></label><br />
+        <input type="text" id="os_slider_google_place_id" name="os_slider_options[os_slider_google_place_id]"
+            value="<?php echo esc_attr($options['os_slider_google_place_id']); ?>" required />
+    </p>
+    <p>
+        <button type="button" class="button" id="os_refresh_reviews"><?php _e('Refresh Reviews', 'owlthslider'); ?></button>
+    </p>
+    <hr />
+    <h4><?php _e('Fetched Reviews', 'owlthslider'); ?></h4>
+    <div id="os_reviews_table_container">
+        <?php os_render_reviews_table($post->ID, $options['os_slider_google_place_id']); ?>
+    </div>
+
+    <?php
+}
+
+/**
+ * Render the reviews table in the metabox.
+ *
+ * @param int    $post_id        The post ID.
+ * @param string $google_place_id The Google Place ID.
+ */
+function os_render_reviews_table($post_id, $google_place_id, $refresh = false)
+{
+
+    $google_place_id = (isset($google_place_id) && !empty($google_place_id)) ? $google_place_id : ORGOTEL_PLACES_ID;
+
+    // Generate a unique transient key for caching the reviews.
+    $transient_key = 'owlth_google_reviews_' . md5($google_place_id);
+    // delete_transient($transient_key);
+    $reviews = os_fetch_google_reviews($google_place_id, $refresh);
+
+    if (!isset($reviews) || empty($reviews)) {
+        echo '<p>' . __('No reviews found or failed to fetch reviews.', 'owlthslider') . '</p>';
+        return;
+    }
+
+    echo '<table class="widefat fixed" cellspacing="0">';
+    echo '<thead>';
+    echo '<tr>';
+    echo '<th>' . __('Reviewer', 'owlthslider') . '</th>';
+    echo '<th>' . __('Rating', 'owlthslider') . '</th>';
+    echo '<th>' . __('Review', 'owlthslider') . '</th>';
+    echo '<th>' . __('Date', 'owlthslider') . '</th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+
+    foreach ($reviews as $review) {
+        $reviewer = esc_html($review->author_name);
+        $rating = intval($review->rating);
+        $comment = esc_html($review->text);
+        $date = esc_html(date_i18n(get_option('date_format'), strtotime($review->time)));
+        echo '<tr>';
+        echo '<td>' . $reviewer . '</td>';
+        echo '<td>' . $rating . '</td>';
+        echo '<td>' . $comment . '</td>';
+        echo '<td>' . $date . '</td>';
+        echo '</tr>';
+    }
+
+    echo '</tbody>';
+    echo '</table>';
+}

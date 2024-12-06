@@ -170,9 +170,9 @@ class Owlthslider {
 		// Register CPT & Taxonomies
 		$this->loader->add_action('init', $plugin_admin,  'os_register_slider_cpt_and_taxonomy');
 		
-		// Slider type - on new slider creation
-		$this->loader->add_action('admin_init', $plugin_admin, 'os_redirect_new_slider_to_type_selection');
-		$this->loader->add_action('admin_menu', $plugin_admin, 'os_add_slider_type_selection_page');
+		// // Slider type - on new slider creation
+		// $this->loader->add_action('admin_menu', $plugin_admin, 'os_add_slider_type_selection_page');
+		// $this->loader->add_action('init', $plugin_admin, 'os_redirect_new_slider_to_type_selection', 1);
 		
 	}
 

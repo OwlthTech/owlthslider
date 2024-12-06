@@ -42,12 +42,16 @@ class Owlthslider_Admin
 		$this->version = $version;
 
 		add_action('wp_ajax_os_auto_save_sliders', 'os_save_data_ajax');
-		add_action('save_post_os_slider', 'os_save_data');
+		add_action('save_post_os_slider', 'test_os_save_data');
 
-		add_action('wp_ajax_os_refresh_reviews', array($this, 'os_ajax_refresh_reviews'));
+		// add_action('wp_ajax_os_refresh_reviews', array($this, 'os_ajax_refresh_reviews'));
 
 		add_filter('manage_os_slider_posts_columns', array($this, 'os_add_shortcode_column'));
 		add_action('manage_os_slider_posts_custom_column', array($this, 'os_shortcode_column_content'), 10, 2);
+
+		// Slider type - on new slider creation
+		add_action('admin_menu', array($this, 'os_add_slider_type_selection_page'));
+		add_action('init', array($this, 'os_redirect_new_slider_to_type_selection'));
 
 		// Metaboxes - remove and add
 		$this->plugin_metaboxes = new Class_Owlthslider_Metaboxes();
@@ -87,7 +91,7 @@ class Owlthslider_Admin
 			'nonce' => wp_create_nonce('os_save_slider_universal_nonce_action'),
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'post_id' => $post->ID,
-			'slider_schema' => os_get_slider_schema()
+			'slider_schema' => os_get_slides_schema()
 		));
 	}
 
@@ -127,7 +131,9 @@ class Owlthslider_Admin
 		// Check if we are on the add-new page for the 'os_slider' post type
 		if ($pagenow === 'post-new.php' && !isset($_GET['slider_type'])) {
 			// Redirect to the type selection screen
+			ob_start();
 			wp_redirect(admin_url('admin.php?page=os_slider_type_selection'));
+			ob_end_flush();
 			exit;
 		}
 	}
