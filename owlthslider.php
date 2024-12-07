@@ -30,6 +30,10 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+if (defined('WP_DEBUG') && WP_DEBUG) {
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+}
+
 /**
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org

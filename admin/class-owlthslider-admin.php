@@ -49,9 +49,6 @@ class Owlthslider_Admin
 		add_filter('manage_os_slider_posts_columns', array($this, 'os_add_shortcode_column'));
 		add_action('manage_os_slider_posts_custom_column', array($this, 'os_shortcode_column_content'), 10, 2);
 
-		// Slider type - on new slider creation
-		add_action('admin_menu', array($this, 'os_add_slider_type_selection_page'));
-		add_action('init', array($this, 'os_redirect_new_slider_to_type_selection'));
 
 		// Metaboxes - remove and add
 		$this->plugin_metaboxes = new Class_Owlthslider_Metaboxes();
@@ -119,119 +116,7 @@ class Owlthslider_Admin
 	}
 
 
-	/**
-	 * Redirect to the slider type selection screen when initializing a new slider.
-	 */
-	public function os_redirect_new_slider_to_type_selection()
-	{
-		global $pagenow;
 
-		if (!isset($_GET['post_type']) || $_GET['post_type'] !== 'os_slider')
-			return;
-		// Check if we are on the add-new page for the 'os_slider' post type
-		if ($pagenow === 'post-new.php' && !isset($_GET['slider_type'])) {
-			// Redirect to the type selection screen
-			ob_start();
-			wp_redirect(admin_url('admin.php?page=os_slider_type_selection'));
-			ob_end_flush();
-			exit;
-		}
-	}
-
-	/**
-	 * Add a submenu page for selecting slider type.
-	 */
-	public function os_add_slider_type_selection_page()
-	{
-		add_submenu_page(
-			null, // No parent, hidden from menu
-			__('Select Slider Type', 'owlthslider'),
-			__('Select Slider Type', 'owlthslider'),
-			'edit_posts',
-			'os_slider_type_selection',
-			array($this, 'os_render_slider_type_selection_page')
-		);
-	}
-
-
-	/**
-	 * Render the slider type selection page.
-	 */
-	public function os_render_slider_type_selection_page($hook)
-	{
-		// Handle form submission
-		if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['os_slider_type'])) {
-			// Verify nonce
-			if (
-				!isset($_POST['os_slider_type_nonce']) ||
-				!wp_verify_nonce($_POST['os_slider_type_nonce'], 'os_select_slider_type_action')
-			) {
-				wp_die(__('Nonce verification failed', 'owlthslider'));
-			}
-
-			$slider_type = intval($_POST['os_slider_type']);
-
-			// Validate slider type
-			$term = get_term($slider_type, 'os_slider_type');
-			if (!$term || is_wp_error($term)) {
-				wp_die(__('Invalid slider type selected', 'owlthslider'));
-			}
-
-			// Create a new auto-draft slider with the selected type
-			$new_slider = array(
-				'post_type' => 'os_slider',
-				'post_status' => 'auto-draft',
-				'post_title' => __('Auto Draft Slider', 'owlthslider'),
-			);
-
-			$post_id = wp_insert_post($new_slider);
-
-			if (is_wp_error($post_id)) {
-				wp_die(__('Failed to create new slider', 'owlthslider'));
-			}
-
-			// Assign the selected slider type
-			wp_set_post_terms($post_id, array($slider_type), 'os_slider_type', false);
-
-			// Redirect to the edit page of the new slider
-			$edit_url = admin_url("post.php?post={$post_id}&action=edit");
-			wp_redirect($edit_url);
-			exit;
-		}
-
-		// Fetch all available slider types
-		$slider_types = get_terms(array(
-			'taxonomy' => 'os_slider_type',
-			'hide_empty' => false,
-		));
-
-		if (empty($slider_types) || is_wp_error($slider_types)) {
-			echo '<div class="wrap">';
-			echo '<h1>' . __('Select Slider Type', 'owlthslider') . '</h1>';
-			echo '<p>' . __('No slider types available. Please create a slider type first.', 'owlthslider') . '</p>';
-			echo '</div>';
-			return;
-		}
-		?>
-		<div class="wrap" id="slide-selection">
-			<h1><?php _e('Select Slider Type', 'owlthslider'); ?></h1>
-			<form method="post" action="">
-				<?php wp_nonce_field('os_select_slider_type_action', 'os_slider_type_nonce'); ?>
-				<div class="slider-types">
-					<?php foreach ($slider_types as $type): ?>
-						<label class="form-control" for="os_slider_type_<?php echo esc_attr($type->term_id); ?>">
-							<input type="radio" id="os_slider_type_<?php echo esc_attr($type->term_id); ?>" name="os_slider_type"
-								value="<?php echo esc_attr($type->term_id); ?>" required />
-							<span><?php echo esc_html($type->name); ?></span>
-						</label>
-					<?php endforeach; ?>
-				</div>
-				<?php submit_button(__('Create Slider', 'owlthslider')); ?>
-			</form>
-		</div>
-
-		<?php
-	}
 
 
 	/**
@@ -305,4 +190,109 @@ class Owlthslider_Admin
 		wp_send_json_success($table_html);
 	}
 
+	
+	
+	public function redirect_new_slider_to_type_selection() {
+		global $pagenow;
+	
+		if (
+			$pagenow === 'post-new.php' &&
+			isset($_GET['post_type']) &&
+			$_GET['post_type'] === 'os_slider' &&
+			!isset($_GET['os_slider_type'])
+		) {
+			wp_safe_redirect(admin_url('admin.php?page=os_slider_type_selection'));
+			exit;
+		}
+	}
+	
+
+	public function add_slider_type_selection_page() {
+		add_submenu_page(
+			'', // No parent menu, hidden from navigation
+			__('Select Slider Type', 'owlthslider'),
+			__('Select Slider Type', 'owlthslider'),
+			'edit_posts',
+			'os_slider_type_selection',
+			array($this, 'os_render_slider_type_selection_page')
+		);
+	}
+	
+	public function os_render_slider_type_selection_page() {
+		$slider_types = get_terms(array(
+			'taxonomy' => 'os_slider_type',
+			'hide_empty' => false,
+		));
+	
+		if (empty($slider_types) || is_wp_error($slider_types)) {
+			echo '<div class="wrap">';
+			echo '<h1>' . __('Select Slider Type', 'owlthslider') . '</h1>';
+			echo '<p>' . __('No slider types available. Please create a slider type first.', 'owlthslider') . '</p>';
+			echo '</div>';
+			return;
+		}
+		?>
+		<div class="wrap" id="slide-selection">
+			<h1><?php _e('Select Slider Type', 'owlthslider'); ?></h1>
+			<form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
+				<?php wp_nonce_field('os_select_slider_type_action', 'os_slider_type_nonce'); ?>
+				<input type="hidden" name="action" value="create_os_slider">
+				<div class="slider-types">
+					<?php foreach ($slider_types as $type): ?>
+						<label class="form-control" for="os_slider_type_<?php echo esc_attr($type->term_id); ?>">
+							<input type="radio" id="os_slider_type_<?php echo esc_attr($type->term_id); ?>" name="os_slider_type"
+								value="<?php echo esc_attr($type->term_id); ?>" required />
+							<span><?php echo esc_html($type->name); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+				<?php submit_button(__('Create Slider', 'owlthslider')); ?>
+			</form>
+		</div>
+		<style>
+			.php-error #adminmenuback, .php-error #adminmenuwrap {margin-top: unset}
+		</style>
+		<?php
+	}
+	
+	
+	
+	public function handle_os_slider_creation() {
+		// Verify nonce for security
+		if (
+			!isset($_POST['os_slider_type_nonce']) ||
+			!wp_verify_nonce($_POST['os_slider_type_nonce'], 'os_select_slider_type_action')
+		) {
+			wp_die(__('Nonce verification failed', 'owlthslider'));
+		}
+	
+		// Validate and sanitize taxonomy
+		$slider_type = intval($_POST['os_slider_type']);
+		$term = get_term($slider_type, 'os_slider_type');
+	
+		if (!$term || is_wp_error($term)) {
+			wp_die(__('Invalid slider type selected', 'owlthslider'));
+		}
+	
+		// Create the custom post type post
+		$new_slider = array(
+			'post_type' => 'os_slider',
+			'post_status' => 'auto-draft',
+			'post_title' => __('Auto Draft Slider', 'owlthslider'),
+		);
+	
+		$post_id = wp_insert_post($new_slider);
+	
+		if (is_wp_error($post_id)) {
+			wp_die(__('Failed to create new slider', 'owlthslider'));
+		}
+	
+		// Assign taxonomy
+		wp_set_post_terms($post_id, array($slider_type), 'os_slider_type', false);
+	
+		// Redirect to the edit screen of the newly created post
+		wp_safe_redirect(admin_url("post.php?post={$post_id}&action=edit"));
+		exit;
+	}
 }
+

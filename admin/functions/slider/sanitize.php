@@ -84,7 +84,7 @@ function os_slider_sanitize_slide( $slide, $type ) {
             );
             break;
     }
-
+    error_log('sanitization of slide worked for '. $_POST['post_ID']);
     return $sanitized_slide;
 }
 

@@ -27,7 +27,8 @@
  * @subpackage Owlthslider/includes
  * @author     Owlth Tech <nil@owlth.tech>
  */
-class Owlthslider {
+class Owlthslider
+{
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -69,21 +70,22 @@ class Owlthslider {
 	 *
 	 * @since    1.0.0
 	 */
-	public function __construct() {
-		if ( defined( 'OWLTHSLIDER_VERSION' ) ) {
+	public function __construct()
+	{
+		if (defined('OWLTHSLIDER_VERSION')) {
 			$this->version = OWLTHSLIDER_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
-		
+
 		$this->plugin_name = 'owlthslider';
 
-		if( defined(OWLTHSLIDER_PLUGIN_DIR)) {
-			$this->plugin_dir = OWLTHSLIDER_PLUGIN_DIR;	
+		if (defined(OWLTHSLIDER_PLUGIN_DIR)) {
+			$this->plugin_dir = OWLTHSLIDER_PLUGIN_DIR;
 		} else {
 			$this->plugin_dir = WP_PLUGIN_DIR . '/' . $this->plugin_name;
 		}
-		
+
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
@@ -107,31 +109,32 @@ class Owlthslider {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function load_dependencies() {
+	private function load_dependencies()
+	{
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-owlthslider-loader.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-owlthslider-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-owlthslider-i18n.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-owlthslider-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-owlthslider-admin.php';
-		
+		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-owlthslider-admin.php';
+
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-owlthslider-public.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-owlthslider-public.php';
 
 		$this->loader = new Owlthslider_Loader();
 
@@ -146,11 +149,12 @@ class Owlthslider {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function set_locale() {
+	private function set_locale()
+	{
 
 		$plugin_i18n = new Owlthslider_i18n();
 
-		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
+		$this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
 
 	}
 
@@ -161,19 +165,20 @@ class Owlthslider {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function define_admin_hooks() {
+	private function define_admin_hooks()
+	{
 
-		$plugin_admin = new Owlthslider_Admin( $this->get_plugin_name(), $this->get_version() );
+		$plugin_admin = new Owlthslider_Admin($this->get_plugin_name(), $this->get_version());
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles_scripts' );
-		
+		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles_scripts');
+
 		// Register CPT & Taxonomies
-		$this->loader->add_action('init', $plugin_admin,  'os_register_slider_cpt_and_taxonomy');
-		
-		// // Slider type - on new slider creation
-		// $this->loader->add_action('admin_menu', $plugin_admin, 'os_add_slider_type_selection_page');
-		// $this->loader->add_action('init', $plugin_admin, 'os_redirect_new_slider_to_type_selection', 1);
-		
+		$this->loader->add_action('init', $plugin_admin, 'os_register_slider_cpt_and_taxonomy');
+
+		$this->loader->add_action('init', $plugin_admin, 'redirect_new_slider_to_type_selection');
+		$this->loader->add_action('admin_menu', $plugin_admin, 'add_slider_type_selection_page');
+		$this->loader->add_action('admin_post_create_os_slider', $plugin_admin, 'handle_os_slider_creation');
+
 	}
 
 	/**
@@ -183,11 +188,12 @@ class Owlthslider {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function define_public_hooks() {
+	private function define_public_hooks()
+	{
 
-		$plugin_public = new Owlthslider_Public( $this->get_plugin_name(), $this->get_version() );
+		$plugin_public = new Owlthslider_Public($this->get_plugin_name(), $this->get_version());
 
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles_scripts' );
+		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles_scripts');
 
 	}
 
@@ -196,7 +202,8 @@ class Owlthslider {
 	 *
 	 * @since    1.0.0
 	 */
-	public function run() {
+	public function run()
+	{
 		$this->loader->run();
 	}
 
@@ -207,7 +214,8 @@ class Owlthslider {
 	 * @since     1.0.0
 	 * @return    string    The name of the plugin.
 	 */
-	public function get_plugin_name() {
+	public function get_plugin_name()
+	{
 		return $this->plugin_name;
 	}
 
@@ -217,7 +225,8 @@ class Owlthslider {
 	 * @since     1.0.0
 	 * @return    Owlthslider_Loader    Orchestrates the hooks of the plugin.
 	 */
-	public function get_loader() {
+	public function get_loader()
+	{
 		return $this->loader;
 	}
 
@@ -227,7 +236,8 @@ class Owlthslider {
 	 * @since     1.0.0
 	 * @return    string    The version number of the plugin.
 	 */
-	public function get_version() {
+	public function get_version()
+	{
 		return $this->version;
 	}
 

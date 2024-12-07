@@ -45,37 +45,55 @@ function os_render_slider_data_table($post)
         </thead>
         <tbody>
             <?php
-            // Render table rows
             foreach ($slider_data as $index => $slide) {
-                echo '<tr>';
-                foreach ($schema['properties'] as $field_key => $field) {
-                    echo '<td class="' . esc_html(isset($field['classes']) ? $field['classes'] : '') . '">';
-                    $value = isset($slide[$field_key]) ? $slide[$field_key] : isset($field['default']) ?? $field['default'];
-                    os_render_fieldset($field_key, $field, $value, $index);
-                    echo '</td>';
-                }
-                // Actions
-                echo '<td class="' . esc_html(isset($field['classes']) ? $field['classes'] : '') . '">';
-                ?>
-                <button type="button" class="button-icon remove-row" title="Remove Slide">
-                    <span class="dashicons dashicons-trash"></span>
-                </button>
-                <button type="button" class="button-icon duplicate-row" title="Duplicate Slide">
-                    <span class="dashicons dashicons-admin-page"></span>
-                </button>
-                <?php
-                echo '</td>';
-                echo '</tr>';
+                echo render_table_row($index, $slider_data, $schema);
             }
             ?>
         </tbody>
     </table>
     <p>
-        <button type="button" class="button os-add-slide"><?php _e('Add Slide', 'owlthslider'); ?></button>
+        <button type="button" class="button os-add-slide" id="add-slider-row"><?php _e('Add Slide', 'owlthslider'); ?></button>
     </p>
+
+    <script type="text/template" id="table-row-template"><?php echo render_table_row_template(); ?></script>
+
     <?php
 }
 
+
+function render_table_row($index, $slide, $schema) {
+    
+        echo '<tr>';
+        foreach ($schema['properties'] as $field_key => $field) {
+            echo '<td class="' . esc_html(isset($field['classes']) ? $field['classes'] : '') . '">';
+            $value = (isset($slide[$field_key]) && !empty($slide[$field_key])) ? ($slide[$field_key]) : (isset($field['default']) ? $field['default'] : '');
+            os_render_fieldset($field_key, $field, $value, $index);
+            echo '</td>';
+        }
+        // Actions
+        echo '<td class="' . esc_html(isset($field['classes']) ? $field['classes'] : '') . '">';
+        ?>
+        <button type="button" class="button-icon remove-row" title="Remove Slide">
+            <span class="dashicons dashicons-trash"></span>
+        </button>
+        <button type="button" class="button-icon duplicate-row" title="Duplicate Slide">
+            <span class="dashicons dashicons-admin-page"></span>
+        </button>
+        <?php
+        echo '</td>';
+        echo '</tr>';
+    
+}
+
+// Template row for adding new rows
+if (!function_exists('render_table_row_template')):
+    function render_table_row_template()
+    {
+        ob_start();
+        render_table_rows('index_count');
+        return ob_get_clean();
+    }
+endif;
 
 /**
  * Render a field or group based on its schema.
@@ -152,7 +170,7 @@ function os_render_field($name, $field, $value)
             ?>
             <input hidden type="text" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_url($value); ?>" />
             <!-- preview -->
-            <?php if (esc_url($value)): ?>
+            <?php if (!empty($value)): ?>
                 <div class="slider-image-thumbnail">
                     <img src="<?php echo esc_url($value); ?>" style="<?php echo ($value != '') ? 'aspect-ratio:16:9' : ''; ?>" />
                     <button type="button" class="button slider-remove-image">&times;</button>
