@@ -66,8 +66,8 @@ add_action('rest_api_init', 'os_register_slider_rest_routes');
  */
 function os_slider_get_permission($request)
 {
-    return true;
     // return current_user_can('manage_options');
+    return true;
 }
 function os_slider_post_permission($request)
 {

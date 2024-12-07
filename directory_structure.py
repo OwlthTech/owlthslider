@@ -10,16 +10,30 @@ if not os.path.exists(docs_directory):
     os.makedirs(docs_directory)
 
 # Custom directories to exclude
-excluded_dirs = ['node_modules', 'vendor', '.git', '.idea', 'docs', 'build', 'languages', 'review-images', 'partials', 'backup']  # Add/remove as needed
-
+excluded_dirs = ['node_modules', 'vendor', '.git', '.idea', 'docs', 'build', 'languages', 'review-images', 'partials', 'backup', 'directory_structure.py']  # Add/remove as needed
+excluded_files = ['README.md', 'config.php', 'webpack-development.config.js', 'webpack-production.config.js']
+excluded_extensions = ['.txt', '.log', '.md', '.json', '.py']                       # Add/Remove as needed
 
 def create_directory_structure(path):
     directory_structure = {}
     
     for dirpath, dirnames, filenames in os.walk(path):
-        # Filter directories and filenames
+        # Filter directories
         dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in excluded_dirs]
-        filenames = [f for f in filenames if not f.startswith('.')]
+        
+        # Filter files by name and extension
+        filtered_files = []
+        for f in filenames:
+            if f.startswith('.'):
+                continue
+            if f in excluded_files:
+                continue
+            ext = os.path.splitext(f)[1].lower()
+            if ext in excluded_extensions:
+                continue
+            filtered_files.append(f)
+        
+        filenames = filtered_files
 
         # Sort for consistent output
         dirnames.sort()
@@ -29,10 +43,7 @@ def create_directory_structure(path):
         if rel_dir == '.':
             rel_dir = ''
 
-        # Only record directories and files if we have something
-        # We'll handle empty directories as well since they might be relevant
-        if rel_dir not in directory_structure:
-            directory_structure[rel_dir] = filenames
+        directory_structure[rel_dir] = filenames
 
     return directory_structure
 
@@ -55,38 +66,6 @@ def extract_php_details(file_content):
     return details
 
 def build_nested_structure(directory_tree):
-    """
-    Convert a flat dictionary { '': [...files...], 'subdir': [...files...] }
-    into a nested structure for easy hierarchical printing.
-
-    Example:
-    {
-      '': ['file1.php', 'file2.php'],
-      'languages': ['lang1.mo', 'lang2.po'],
-      'public': [],
-      'public/js': ['script.js']
-    }
-
-    Will become a nested dict like:
-    {
-      'files': ['file1.php', 'file2.php'],
-      'dirs': {
-        'languages': {
-          'files': ['lang1.mo', 'lang2.po'],
-          'dirs': {}
-        },
-        'public': {
-          'files': [],
-          'dirs': {
-            'js': {
-              'files': ['script.js'],
-              'dirs': {}
-            }
-          }
-        }
-      }
-    }
-    """
     root = {'files': [], 'dirs': {}}
 
     for rel_dir, files in directory_tree.items():
@@ -101,16 +80,11 @@ def build_nested_structure(directory_tree):
     return root
 
 def print_structure_recursive(node, path, plugin_path, indent=0):
-    """
-    Recursively print the directory structure with files, classes, and functions.
-    """
     lines = []
     indent_str = ' ' * 4 * indent  # 4 spaces per indent level
 
     # Print files first
     for f in node['files']:
-        # For each file, print filename
-        # If it's a PHP file, extract classes and functions and print them
         if f.endswith('.php'):
             lines.append(f"{indent_str}- **{f}**")
             file_path = os.path.join(plugin_path, path, f) if path else os.path.join(plugin_path, f)
@@ -126,18 +100,15 @@ def print_structure_recursive(node, path, plugin_path, indent=0):
                     for func in details['functions']:
                         lines.append(f"{indent_str}        - {func}")
         else:
-            # Non-PHP files just get printed as a bullet
             lines.append(f"{indent_str}- **{f}**")
 
     # Print directories next
     for d, sub_node in node['dirs'].items():
         lines.append(f"{indent_str}- **{d}/**")
-        # Recurse into the directory
         sub_path = os.path.join(path, d) if path else d
         lines.extend(print_structure_recursive(sub_node, sub_path, plugin_path, indent+1))
 
     return lines
-
 
 # MAIN EXECUTION
 
@@ -146,7 +117,6 @@ nested_structure = build_nested_structure(directory_tree)
 
 output_md_file = os.path.join(docs_directory, 'combined_structure.md')
 with open(output_md_file, 'w') as f:
-    # Print root files and directories
     markdown_lines = print_structure_recursive(nested_structure, '', plugin_path)
     f.write('\n'.join(markdown_lines))
 
