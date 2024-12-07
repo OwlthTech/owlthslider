@@ -61,7 +61,7 @@ jQuery(document).ready(($) => {
 	$('#add-slider-row').on('click', () => {
 		// Get the row template and replace `index_count` with the new index
 		let currentIndex = $('#os-slider-table tbody tr').length;
-		currentIndex++;
+		// currentIndex++;
 		let newRowHtml = $('#table-row-template').html();
 		newRowHtml = newRowHtml.replace(/index_count/g, currentIndex);
 
@@ -69,7 +69,7 @@ jQuery(document).ready(($) => {
 		$('#os-slider-table tbody').append(newRowHtml);
 
 		// Initialize TinyMCE for the new row's caption textarea
-		const newEditorId = `os_slider_caption_${currentIndex}`;
+		const newEditorId = `slides${currentIndex}caption`;
 		initializeTinyMCE(newEditorId);
 
 		// Update row indexes in case anything else needs updating
@@ -78,7 +78,7 @@ jQuery(document).ready(($) => {
 
 	// Initialize TinyMCE for existing editors on page load
 	$('#os-slider-table tbody tr').each(function (index) {
-		const editorId = `os_slider_caption_${index}`;
+		const editorId = `slides${index}caption`;
 		initializeTinyMCE(editorId);
 	});
 
@@ -95,13 +95,13 @@ jQuery(document).ready(($) => {
 	// Duplicate row functionality
 	$('#os-slider-table').on('click', '.duplicate-row', function () {
 		const row = $(this).closest('tr').clone();
-		row.find('input, textarea').val(''); // Clear values for inputs and textareas in the cloned row
-		$('#os-slider-table tbody').append(row);
+		// row.find('input, textarea').val(''); // Clear values for inputs and textareas in the cloned row
+		$(this).closest('tr').after(row);
 		updateRowIndexes();
 
 		// Initialize TinyMCE for the cloned row
 		const newIndex = $('#os-slider-table tbody tr').length - 1;
-		const newEditorId = `os_slider_caption_${newIndex}`;
+		const newEditorId = `slides${newIndex}caption`;
 		initializeTinyMCE(newEditorId);
 	});
 
@@ -148,6 +148,7 @@ jQuery(document).ready(($) => {
 		$(this).closest('td').find('input[name*="background_image"]').val('');
 		$(this).closest('td').find('button.slider-select-image').show();
 		$(this).closest('.slider-image-thumbnail').remove();
+		autoSaveSlider();
 	});
 
 	// Make rows sortable

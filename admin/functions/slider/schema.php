@@ -11,7 +11,7 @@ function os_get_slides_schema()
         'enabled' => array(
             'type' => 'boolean',
             'label' => __('#', 'owlthslider'),
-            'default' => true,
+            'default' => 1,
             'sanitize_callback' => 'rest_sanitize_boolean',
             'classes' => 'cb-column'
         ),

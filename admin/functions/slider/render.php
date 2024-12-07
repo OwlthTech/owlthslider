@@ -18,14 +18,17 @@ function os_render_slider_data_table($post)
     $schema = os_get_slides_schema()['slider_data']['properties'][isset($slider_type) ? $slider_type : 'default'];
 
     // Get existing slider data or set default
+    error_log(print_r($post, true));
     $slider_data = get_post_meta($post->ID, 'os_slider_data', true);
     $slider_data = is_array($slider_data) ? $slider_data : array();
+    error_log(print_r($slider_data, true));
 
     // If no slides, add an empty one
     if (empty($slider_data)) {
         $slider_data[] = array();
     }
 
+    wp_nonce_field('os_save_slider_universal_nonce_action', 'os_slider_universal_nonce');
     ?>
     <table class="os-slider-data-table widefat fixed" id="os-slider-table" cellspacing="0">
         <thead>
@@ -46,43 +49,45 @@ function os_render_slider_data_table($post)
         <tbody>
             <?php
             foreach ($slider_data as $index => $slide) {
-                echo render_table_row($index, $slider_data, $schema);
+                echo render_table_row($index, $slide, $schema);
             }
             ?>
         </tbody>
     </table>
     <p>
-        <button type="button" class="button os-add-slide" id="add-slider-row"><?php _e('Add Slide', 'owlthslider'); ?></button>
+        <button type="button" class="button os-add-slide"
+            id="add-slider-row"><?php _e('Add Slide', 'owlthslider'); ?></button>
     </p>
 
-    <script type="text/template" id="table-row-template"><?php echo render_table_row_template(); ?></script>
+    <script type="text/template"
+        id="table-row-template"><?php render_table_row('index_count', $slider_data, $schema); ?></script>
 
     <?php
 }
 
 
-function render_table_row($index, $slide, $schema) {
-    
-        echo '<tr>';
-        foreach ($schema['properties'] as $field_key => $field) {
-            echo '<td class="' . esc_html(isset($field['classes']) ? $field['classes'] : '') . '">';
-            $value = (isset($slide[$field_key]) && !empty($slide[$field_key])) ? ($slide[$field_key]) : (isset($field['default']) ? $field['default'] : '');
-            os_render_fieldset($field_key, $field, $value, $index);
-            echo '</td>';
-        }
-        // Actions
+function render_table_row($index, $slide, $schema)
+{
+
+    echo '<tr>';
+    foreach ($schema['properties'] as $field_key => $field) {
         echo '<td class="' . esc_html(isset($field['classes']) ? $field['classes'] : '') . '">';
-        ?>
+        $value = (isset($slide[$field_key]) && !empty($slide[$field_key])) ? ($slide[$field_key]) : (isset($field['default']) ? $field['default'] : '');
+        os_render_fieldset($field_key, $field, $value, $index);
+        echo '</td>';
+    }
+    ?>
+    <td class="action-column">
         <button type="button" class="button-icon remove-row" title="Remove Slide">
             <span class="dashicons dashicons-trash"></span>
         </button>
         <button type="button" class="button-icon duplicate-row" title="Duplicate Slide">
             <span class="dashicons dashicons-admin-page"></span>
         </button>
-        <?php
-        echo '</td>';
-        echo '</tr>';
-    
+    </td>
+    <?php
+    echo '</tr>';
+
 }
 
 // Template row for adding new rows
@@ -90,7 +95,7 @@ if (!function_exists('render_table_row_template')):
     function render_table_row_template()
     {
         ob_start();
-        render_table_rows('index_count');
+        render_table_row('index_count');
         return ob_get_clean();
     }
 endif;
@@ -145,7 +150,7 @@ function os_render_field($name, $field, $value)
             ?>
             <label>
                 <input type="checkbox" name="<?php echo esc_attr($name); ?>" value="1" <?php checked($value, 1); ?> />
-                <?php echo esc_html($label); ?>
+                <span><?php echo esc_html($label); ?></span>
             </label>
             <?php
             break;
@@ -158,11 +163,11 @@ function os_render_field($name, $field, $value)
             <?php
             break;
         case 'wp_editor':
-            ?>
-            <?php
             $settings = array(
                 'textarea_name' => $name,
                 'textarea_rows' => 5,
+                'teeny' => false, // Set to false to allow extended editor controls.
+                'media_buttons' => false,
             );
             wp_editor($value, sanitize_title($name), $settings);
             break;
@@ -175,9 +180,10 @@ function os_render_field($name, $field, $value)
                     <img src="<?php echo esc_url($value); ?>" style="<?php echo ($value != '') ? 'aspect-ratio:16:9' : ''; ?>" />
                     <button type="button" class="button slider-remove-image">&times;</button>
                 </div>
-            <?php endif; ?>
-            <button type="button" class="upload-button button-add-media button-add-site-icon slider-select-image"
-                data-target="<?php echo esc_attr($name); ?>" style="aspect-ratio:16:9;<?php echo !empty($image) ? 'display:none' : ''; ?>"><?php _e('Select Image', 'owlthslider'); ?></button>
+                <?php endif; ?>
+                <button type="button" class="<?php echo !empty($value) ? 'hidden' : ''; ?> upload-button button-add-media button-add-site-icon slider-select-image"
+                data-target="<?php echo esc_attr($name); ?>"
+                style="aspect-ratio:16:9;<?php echo !empty($image) ? 'display:none' : ''; ?>"><?php _e('Select Image', 'owlthslider'); ?></button>
             <?php
             break;
         case 'url':

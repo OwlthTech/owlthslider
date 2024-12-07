@@ -2,7 +2,7 @@
  *
  * Parallax
  */
-const TWEEN_FACTOR_BASE = 0.2;
+const TWEEN_FACTOR_BASE = 0.5;
 let tweenFactor = 0;
 let tweenNodes = [];
 

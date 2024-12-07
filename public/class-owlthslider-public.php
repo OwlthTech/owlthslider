@@ -20,6 +20,9 @@
  * @subpackage Owlthslider/public
  * @author     Owlth Tech <nil@owlth.tech>
  */
+
+
+
 class Owlthslider_Public
 {
 
@@ -60,9 +63,9 @@ class Owlthslider_Public
 	 */
 	public function os_enqueue_assets_if_slider_shortcode($content)
 	{
-		if (has_shortcode($content, 'os_slider')) {
-			wp_enqueue_script($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'public/js/owlthslider.min.js', array('jquery'), OWLTHSLIDER_VERSION, false);
-			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'public/css/owlthslider-public.css', array(), OWLTHSLIDER_VERSION, 'all');
+		if (has_shortcode($content, 'os_slider') && is_dir(OWLTHSLIDER_PLUGIN_DIR . 'build/public/')) {
+			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/public/css/owlthslider.min.css', array(), OWLTHSLIDER_VERSION, 'all');
+			wp_enqueue_script($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/public/js/owlthslider.min.js', array(), OWLTHSLIDER_VERSION, true);
 		}
 
 		return $content;
@@ -77,7 +80,7 @@ class Owlthslider_Public
 	public function os_render_slider_in_preview($content)
 	{
 		global $post;
-
+		
 		// Check if it's a preview, the post type is 'os_slider', and we're viewing in admin or front-end preview
 		if (is_preview() && $post && $post->post_type === 'os_slider') {
 			// Generate the shortcode for the current slider
@@ -109,7 +112,7 @@ class Owlthslider_Public
 		}
 
 		$post_id = intval($atts['id']);
-		$slider_data = get_post_meta($post_id, '_os_slider_data', true);
+		$slider_data = get_post_meta($post_id, 'os_slider_data', true);
 		$slider_data = is_array($slider_data) ? $slider_data : array();
 
 		if (empty($slider_data)) {
@@ -117,11 +120,9 @@ class Owlthslider_Public
 		}
 
 		// Slider settings
-		$slider_options = get_post_meta($post_id, '_os_slider_options', true);
+		$slider_options = get_post_meta($post_id, 'os_slider_options', true);
 
-		$slider_type = $slider_options['os_slider_autoplay'] == 'yes' ? 'autoplay' : '';
-		$autoplay_duration = get_post_meta($post_id, '_os_slider_autoplay_duration', true);
-		$autoplay_delay = get_post_meta($post_id, '_os_slider_autoplay_delay', true);
+		$slider_type = isset($slider_options['os_slider_autoplay']) ? 'autoplay' : 'autoscroll';
 
 		ob_start();
 		?>
@@ -129,7 +130,7 @@ class Owlthslider_Public
 			<div class="os-slider__viewport">
 				<div class="os-slider__container">
 					<?php foreach ($slider_data as $data): ?>
-						<?php if ($data['enabled'] === 'yes'): ?>
+						<?php if ($data['enabled']): ?>
 							<div class="os-slider__slide" style="background-image: url('');">
 								<div class="embla__parallax">
 									<div class="embla__parallax__layer">
@@ -140,9 +141,9 @@ class Owlthslider_Public
 									<div class="os-slider-content" style="color: white; z-index: 1;">
 										<h2><?php echo esc_html($data['heading']); ?></h2>
 										<p><?php echo $data['caption']; ?></p>
-										<?php if ($data['cta_text'] && $data['cta_link']): ?>
-											<a href="<?php echo esc_url($data['cta_link']); ?>" class="os-slider-cta-button">
-												<?php echo esc_html($data['cta_text']); ?>
+										<?php if (isset($data['cta_details']['cta_text']) && isset($data['cta_details']['cta_link'])): ?>
+											<a href="<?php echo esc_url($data['cta_details']['cta_link']); ?>" class="os-slider-cta-button">
+												<?php echo esc_html($data['cta_details']['cta_text']); ?>
 											</a>
 										<?php endif; ?>
 									</div>

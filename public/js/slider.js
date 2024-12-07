@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set the options for Embla Carousel using dataset attributes
     const OPTIONS = {
       loop: emblaNode.dataset.loop !== 'false', // Default to true unless explicitly set to false
-      speed: parseInt(emblaNode.dataset.duration, 10) || 10,
+      speed: parseInt(emblaNode.dataset.duration, 10) || 5,
       // Add other options as needed
       breakpoints: {
         // Example:
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const autoplayPlugin = EmblaCarouselAutoplay({
           playOnInit: true,
           stopOnInteraction: false,
-          delay: parseInt(emblaNode.dataset.delay, 10) || 2500,
+          delay: parseInt(emblaNode.dataset.delay, 1000) || 2500,
         });
         plugins.push(autoplayPlugin);
         initializedPlugins.push(autoplayPlugin);

@@ -1,5 +1,5 @@
 #os-slider-table {
-	input {
+	input:not([type='checkbox']) {
 		width: -webkit-fill-available;
 	}
 
@@ -100,6 +100,10 @@
 		border: none;
 		padding: 0;
 		background-color: transparent;
+	}
+
+	.cb-column label span {
+		display: none;
 	}
 
 	.action-column button:focus {
