@@ -35,7 +35,7 @@ class Owlthslider_Public
 	{
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
-		add_filter('the_content', array($this, 'os_enqueue_assets_if_slider_shortcode'));
+		add_filter('the_content', array($this, 'os_slider_conditional_enqueue'));
 		add_filter('the_content', array($this, 'os_render_slider_in_preview'));
 		add_shortcode('os_slider', array($this, 'os_slider_shortcode'));
 	}
@@ -61,7 +61,7 @@ class Owlthslider_Public
 	 * @param string $content The content of the post.
 	 * @return string Modified post content.
 	 */
-	public function os_enqueue_assets_if_slider_shortcode($content)
+	public function os_slider_conditional_enqueue($content)
 	{
 		if (has_shortcode($content, 'os_slider') && is_dir(OWLTHSLIDER_PLUGIN_DIR . 'build/public/')) {
 			wp_enqueue_style($this->plugin_name, OWLTHSLIDER_PLUGIN_URL . 'build/public/css/owlthslider.min.css', array(), OWLTHSLIDER_VERSION, 'all');

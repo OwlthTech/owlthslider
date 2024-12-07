@@ -1,0 +1,50 @@
+### Root/
+  - [directory_structure.py](#directory_structure_py)
+  - [index.php](#index_php)
+  - [LICENSE.txt](#license_txt)
+  - [owlthslider.php](#owlthslider_php)
+  - [package-lock.json](#package-lock_json)
+  - [package.json](#package_json)
+  - [php_functionality_structure.md](#php_functionality_structure_md)
+  - [php_functions.py](#php_functions_py)
+  - [README.txt](#readme_txt)
+  - [uninstall.php](#uninstall_php)
+  - [webpack-development.config.js](#webpack-development_config_js)
+  - [webpack-production.config.js](#webpack-production_config_js)
+### admin/
+  - [class-owlthslider-admin.php](#class-owlthslider-admin_php)
+  - [index.php](#index_php)
+### admin\css/
+  - [owlthslider-admin.css](#owlthslider-admin_css)
+### admin\functions\reviews/
+  - [fetch.php](#fetch_php)
+  - [index.php](#index_php)
+### admin\functions\slider/
+  - [api.php](#api_php)
+  - [cpt.php](#cpt_php)
+  - [index.php](#index_php)
+  - [render-old.php](#render-old_php)
+  - [render.php](#render_php)
+  - [sanitize.php](#sanitize_php)
+  - [save.php](#save_php)
+  - [schema.php](#schema_php)
+### admin\includes/
+  - [class-owlthslider-metaboxes.php](#class-owlthslider-metaboxes_php)
+### admin\js/
+  - [owlthslider-admin.js](#owlthslider-admin_js)
+### includes/
+  - [class-owlthslider-activator.php](#class-owlthslider-activator_php)
+  - [class-owlthslider-deactivator.php](#class-owlthslider-deactivator_php)
+  - [class-owlthslider-i18n.php](#class-owlthslider-i18n_php)
+  - [class-owlthslider-loader.php](#class-owlthslider-loader_php)
+  - [class-owlthslider.php](#class-owlthslider_php)
+  - [index.php](#index_php)
+### public/
+  - [class-owlthslider-public.php](#class-owlthslider-public_php)
+  - [index.php](#index_php)
+### public\css/
+  - [owlthslider-public.css](#owlthslider-public_css)
+### public\js/
+  - [owlthslider-public.js](#owlthslider-public_js)
+  - [parallax.js](#parallax_js)
+  - [slider.js](#slider_js)

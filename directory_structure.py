@@ -9,34 +9,37 @@ docs_directory = os.path.join(plugin_path, 'docs')
 if not os.path.exists(docs_directory):
     os.makedirs(docs_directory)
 
-# Function to create the directory structure
+# Custom directories to exclude
+excluded_dirs = ['node_modules', 'vendor', '.git', '.idea', 'docs', 'build', 'languages', 'review-images', 'partials', 'backup']  # Add/remove as needed
+
+
 def create_directory_structure(path):
     directory_structure = {}
     
     for dirpath, dirnames, filenames in os.walk(path):
+        # Filter directories and filenames
+        dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in excluded_dirs]
+        filenames = [f for f in filenames if not f.startswith('.')]
+
+        # Sort for consistent output
+        dirnames.sort()
+        filenames.sort()
+
         rel_dir = os.path.relpath(dirpath, path)
         if rel_dir == '.':
             rel_dir = ''
-        directory_structure[rel_dir] = filenames
+
+        # Only record directories and files if we have something
+        # We'll handle empty directories as well since they might be relevant
+        if rel_dir not in directory_structure:
+            directory_structure[rel_dir] = filenames
 
     return directory_structure
 
-# Function to write the directory structure to markdown
-def write_directory_structure_to_md(directory_tree, output_file):
-    with open(output_file, 'w') as f:
-        for folder, files in directory_tree.items():
-            if folder:
-                f.write(f"### {folder}/\n")
-            else:
-                f.write(f"### Root/\n")
-            for file in files:
-                link = file.replace(' ', '%20')
-                file_id = file.replace('.', '_').replace(' ', '_').lower()
-                f.write(f"  - [{file}](#{file_id})\n")
-
-# Function to clean and extract PHP content
 def clean_php_content(content):
+    # Remove single-line comments
     content = re.sub(r'//.*', '', content)
+    # Remove multi-line comments
     content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
     return content
 
@@ -47,44 +50,104 @@ def extract_php_details(file_content):
     
     details = {
         'classes': classes,
-        'functions': [{'name': func[0], 'params': func[1]} for func in functions]
+        'functions': [func[0] for func in functions]
     }
     return details
 
-# Function to write file details to markdown
-def write_file_details_to_md(directory_tree, output_file, plugin_path):
-    with open(output_file, 'a') as f:
-        for folder, files in directory_tree.items():
-            for file in files:
-                if file.endswith('.php'):
-                    file_path = os.path.join(plugin_path, folder, file)
-                    with open(file_path, 'r', encoding='utf-8') as php_file:
-                        content = php_file.read()
-                        details = extract_php_details(content)
-                        file_id = file.replace('.', '_').replace(' ', '_').lower()
-                        f.write(f"\n\n## {file} <a id=\"{file_id}\"></a>\n")
-                        if details['classes']:
-                            f.write("### Classes\n")
-                            for cls in details['classes']:
-                                f.write(f"- {cls}\n")
-                        if details['functions']:
-                            f.write("### Functions\n")
-                            for func in details['functions']:
-                                f.write(f"- **{func['name']}**\n")
-                                # Only write the parameters if they are valid and meaningful
-                                if func['params'] and func['params'].strip() and func['params'].strip() != '':
-                                    f.write(f"  - Parameters: {func['params']}\n")
+def build_nested_structure(directory_tree):
+    """
+    Convert a flat dictionary { '': [...files...], 'subdir': [...files...] }
+    into a nested structure for easy hierarchical printing.
 
-# Generate the directory structure
+    Example:
+    {
+      '': ['file1.php', 'file2.php'],
+      'languages': ['lang1.mo', 'lang2.po'],
+      'public': [],
+      'public/js': ['script.js']
+    }
+
+    Will become a nested dict like:
+    {
+      'files': ['file1.php', 'file2.php'],
+      'dirs': {
+        'languages': {
+          'files': ['lang1.mo', 'lang2.po'],
+          'dirs': {}
+        },
+        'public': {
+          'files': [],
+          'dirs': {
+            'js': {
+              'files': ['script.js'],
+              'dirs': {}
+            }
+          }
+        }
+      }
+    }
+    """
+    root = {'files': [], 'dirs': {}}
+
+    for rel_dir, files in directory_tree.items():
+        parts = rel_dir.split(os.sep) if rel_dir else []
+        current = root
+        for p in parts:
+            if p not in current['dirs']:
+                current['dirs'][p] = {'files': [], 'dirs': {}}
+            current = current['dirs'][p]
+        current['files'] = files
+
+    return root
+
+def print_structure_recursive(node, path, plugin_path, indent=0):
+    """
+    Recursively print the directory structure with files, classes, and functions.
+    """
+    lines = []
+    indent_str = ' ' * 4 * indent  # 4 spaces per indent level
+
+    # Print files first
+    for f in node['files']:
+        # For each file, print filename
+        # If it's a PHP file, extract classes and functions and print them
+        if f.endswith('.php'):
+            lines.append(f"{indent_str}- **{f}**")
+            file_path = os.path.join(plugin_path, path, f) if path else os.path.join(plugin_path, f)
+            with open(file_path, 'r', encoding='utf-8') as php_file:
+                content = php_file.read()
+                details = extract_php_details(content)
+                if details['classes']:
+                    lines.append(f"{indent_str}    - **Classes:**")
+                    for cls in details['classes']:
+                        lines.append(f"{indent_str}        - {cls}")
+                if details['functions']:
+                    lines.append(f"{indent_str}    - **Functions:**")
+                    for func in details['functions']:
+                        lines.append(f"{indent_str}        - {func}")
+        else:
+            # Non-PHP files just get printed as a bullet
+            lines.append(f"{indent_str}- **{f}**")
+
+    # Print directories next
+    for d, sub_node in node['dirs'].items():
+        lines.append(f"{indent_str}- **{d}/**")
+        # Recurse into the directory
+        sub_path = os.path.join(path, d) if path else d
+        lines.extend(print_structure_recursive(sub_node, sub_path, plugin_path, indent+1))
+
+    return lines
+
+
+# MAIN EXECUTION
+
 directory_tree = create_directory_structure(plugin_path)
+nested_structure = build_nested_structure(directory_tree)
 
-# Define the output markdown files in the docs directory
-output_md_structure_file = os.path.join(docs_directory, 'directory_structure.md')
-output_md_details_file = os.path.join(docs_directory, 'file_details.md')
+output_md_file = os.path.join(docs_directory, 'combined_structure.md')
+with open(output_md_file, 'w') as f:
+    # Print root files and directories
+    markdown_lines = print_structure_recursive(nested_structure, '', plugin_path)
+    f.write('\n'.join(markdown_lines))
 
-# Write the directory structure and file details to the docs directory
-write_directory_structure_to_md(directory_tree, output_md_structure_file)
-write_file_details_to_md(directory_tree, output_md_details_file, plugin_path)
-
-print(f"Directory structure written to {output_md_structure_file}")
-print(f"File details written to {output_md_details_file}")
+print(f"Combined structure written to {output_md_file}")

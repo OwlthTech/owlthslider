@@ -1,0 +1,152 @@
+- **LICENSE.txt**
+- **README.txt**
+- **directory_structure.py**
+- **index.php**
+- **owlthslider.php**
+    - **Functions:**
+        - activate_owlthslider
+        - deactivate_owlthslider
+        - run_owlthslider
+- **package-lock.json**
+- **package.json**
+- **php_functionality_structure.md**
+- **php_functions.py**
+- **uninstall.php**
+- **webpack-development.config.js**
+- **webpack-production.config.js**
+- **admin/**
+    - **class-owlthslider-admin.php**
+        - **Classes:**
+            - Owlthslider_Admin
+        - **Functions:**
+            - __construct
+            - enqueue_styles_scripts
+            - enqueue_page_selection
+            - os_register_slider_cpt_and_taxonomy
+            - os_add_shortcode_column
+            - os_shortcode_column_content
+            - os_ajax_refresh_reviews
+            - redirect_new_slider_to_type_selection
+            - add_slider_type_selection_page
+            - os_render_slider_type_selection_page
+            - handle_os_slider_creation
+    - **index.php**
+    - **css/**
+        - **owlthslider-admin.css**
+    - **functions/**
+        - **reviews/**
+            - **fetch.php**
+                - **Functions:**
+                    - os_fetch_google_reviews
+            - **index.php**
+        - **slider/**
+            - **api.php**
+                - **Functions:**
+                    - os_register_slider_rest_routes
+                    - os_slider_get_permission
+                    - os_slider_post_permission
+                    - os_get_slider_data
+                    - os_update_slider_data
+            - **cpt.php**
+                - **Functions:**
+                    - os_register_cpt
+                    - os_register_taxonomy
+            - **index.php**
+            - **render-old.php**
+                - **Functions:**
+                    - os_slider_render_table
+                    - render_table_rows
+                    - render_table_row_template
+                    - os_slider_render_reviews_settings
+                    - os_render_reviews_table
+            - **render.php**
+                - **Functions:**
+                    - os_render_slider_data_table
+                    - render_table_row
+                    - render_table_row_template
+                    - os_render_fieldset
+                    - os_render_field
+            - **sanitize.php**
+                - **Functions:**
+                    - os_pre_update_slider_meta
+                    - os_sanitize_and_validate_meta
+                    - os_slider_sanitize_slide
+                    - os_sanitize_and_validate_options_meta
+                    - os_validate_field_type
+            - **save.php**
+                - **Functions:**
+                    - test_os_save_data
+                    - os_save_data_ajax
+            - **schema.php**
+                - **Functions:**
+                    - os_get_slides_schema
+                    - os_get_slider_option_schema
+    - **includes/**
+        - **class-owlthslider-metaboxes.php**
+            - **Classes:**
+                - Class_Owlthslider_Metaboxes
+            - **Functions:**
+                - __construct
+                - os_remove_meta_box
+                - os_add_meta_box
+                - os_slider_render_options
+                - handleDependencies
+                - os_slider_render_types
+    - **js/**
+        - **owlthslider-admin.js**
+- **includes/**
+    - **class-owlthslider-activator.php**
+        - **Classes:**
+            - Owlthslider_Activator
+        - **Functions:**
+            - activate
+    - **class-owlthslider-deactivator.php**
+        - **Classes:**
+            - Owlthslider_Deactivator
+        - **Functions:**
+            - deactivate
+    - **class-owlthslider-i18n.php**
+        - **Classes:**
+            - Owlthslider_i18n
+        - **Functions:**
+            - load_plugin_textdomain
+    - **class-owlthslider-loader.php**
+        - **Classes:**
+            - Owlthslider_Loader
+        - **Functions:**
+            - __construct
+            - add_action
+            - add_filter
+            - add
+            - run
+    - **class-owlthslider.php**
+        - **Classes:**
+            - Owlthslider
+        - **Functions:**
+            - __construct
+            - load_dependencies
+            - set_locale
+            - define_admin_hooks
+            - define_public_hooks
+            - run
+            - get_plugin_name
+            - get_loader
+            - get_version
+    - **index.php**
+- **public/**
+    - **class-owlthslider-public.php**
+        - **Classes:**
+            - Owlthslider_Public
+        - **Functions:**
+            - __construct
+            - enqueue_styles_scripts
+            - os_slider_conditional_enqueue
+            - os_render_slider_in_preview
+            - os_slider_shortcode
+    - **index.php**
+    - **css/**
+        - **owlthslider-public.css**
+    - **js/**
+        - **owlthslider-public.js**
+        - **parallax.js**
+        - **slider.js**

@@ -12,7 +12,7 @@ function os_register_slider_rest_routes()
         'permission_callback' => 'os_slider_get_permission',
         'args' => array(
             'id' => array(
-                'validate_callback' => 'os_validate_numeric',
+                'validate_callback' => '',
             ),
         ),
     ));
@@ -71,8 +71,8 @@ function os_slider_get_permission($request)
 }
 function os_slider_post_permission($request)
 {
-    return current_user_can('manage_options');
-    // return true;
+    // return current_user_can('manage_options');
+    return true;
 }
 /**
  * Get slider data via REST API.
@@ -91,11 +91,11 @@ function os_get_slider_data($request)
     }
 
     // Get slider data
-    $slider_data = get_post_meta($post_id, '_os_slider_data', true);
+    $slider_data = get_post_meta($post_id, 'os_slider_data', true);
     $slider_data = is_array($slider_data) ? $slider_data : array();
 
     // Get slider options
-    $slider_options = get_post_meta($post_id, '_os_slider_options', true);
+    $slider_options = get_post_meta($post_id, 'os_slider_options', true);
     $slider_options = is_array($slider_options) ? $slider_options : array();
 
     return rest_ensure_response(
