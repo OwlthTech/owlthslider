@@ -34,7 +34,7 @@ class Owlthslider_Metaboxes
         // Types
         add_meta_box(
             'os_slider_types_meta_box',
-            __('Slider Type', 'owlthslider'),
+            __('Slider Data Type', 'owlthslider'),
             array($this, 'os_slider_render_types'),
             'os_slider',
             'side',
@@ -44,7 +44,7 @@ class Owlthslider_Metaboxes
         // Templates
         add_meta_box(
             'os_slider_templates_meta_box',
-            __('Slider Type', 'owlthslider'),
+            __('Slider Template', 'owlthslider'),
             array($this, 'os_slider_render_templates'),
             'os_slider',
             'side',
@@ -412,96 +412,78 @@ class Owlthslider_Metaboxes
     }
 
 
-    // Types
-    function os_slider_render_types($post)
-    {
-        $slider_types = get_terms(array(
+    function os_slider_render_types($post) {
+        $terms = get_terms(array(
             'taxonomy' => 'os_slider_type',
             'hide_empty' => false,
         ));
-
-        $selected_type = wp_get_post_terms($post->ID, 'os_slider_type', array('fields' => 'slugs'));
-        if (empty($selected_type)) {
-            $default_category = get_term_by('slug', 'default', 'os_slider_type');
-            $selected_type = $default_category ? array($default_category->slug) : array();
-        }
-        var_dump($selected_type);
+    
+        $current_term = get_the_terms($post->ID, 'os_slider_type');
+        $current_term_id = (!empty($current_term) && !is_wp_error($current_term)) ? $current_term[0]->term_id : 0;
+    
         wp_nonce_field('os_slider_nonce_action', 'os_slider_nonce');
-
+    
         echo '<ul>';
-        foreach ($slider_types as $type) {
-            echo '<li>';
-            echo '<label>';
-            echo '<input type="radio" name="os_slider_type" value="' . esc_attr($type->slug) . '" ' . checked(!empty($selected_type) && in_array($type->slug, $selected_type), true, false) . ' />';
-            echo esc_html($type->name);
-            echo '</label>';
-            echo '</li>';
+        foreach ($terms as $term) {
+            $checked = checked($term->term_id, $current_term_id, false);
+            echo "<li>
+                    <label>
+                        <input type='radio' name='os_slider_type' value='" . esc_attr($term->term_id) . "' {$checked} />
+                        " . esc_html($term->name) . "
+                    </label>
+                  </li>";
         }
         echo '</ul>';
     }
-
-
-    // Templates
-    function os_slider_render_templates($post)
-    {
-        $slider_templates = get_terms(array(
+    
+    function os_slider_render_templates($post) {
+        $terms = get_terms(array(
             'taxonomy' => 'os_slider_template',
             'hide_empty' => false,
         ));
-
-        $selected_template = wp_get_post_terms($post->ID, 'os_slider_template', array('fields' => 'slugs'));
-        if (empty($selected_template)) {
-            $default_template = get_term_by('slug', 'default', 'os_slider_template');
-            $selected_template = $default_template ? array($default_template->slug) : array();
-        }
-        var_dump($selected_template);
+    
+        $current_term = get_the_terms($post->ID, 'os_slider_template');
+        $current_term_id = (!empty($current_term) && !is_wp_error($current_term)) ? $current_term[0]->term_id : 0;
+    
         wp_nonce_field('os_slider_nonce_action', 'os_slider_nonce');
-
+    
         echo '<ul>';
-        foreach ($slider_templates as $template) {
-            echo '<li>';
-            echo '<label>';
-            echo '<input type="radio" name="os_slider_template" value="' . esc_attr($template->slug) . '" ' . checked(!empty($selected_template) && in_array($template->slug, $selected_template), true, false) . ' />';
-            echo esc_html($template->name);
-            echo '</label>';
-            echo '</li>';
+        foreach ($terms as $term) {
+            $checked = checked($term->term_id, $current_term_id, false);
+            echo "<li>
+                    <label>
+                        <input type='radio' name='os_slider_template' value='" . esc_attr($term->term_id) . "' {$checked} />
+                        " . esc_html($term->name) . "
+                    </label>
+                  </li>";
         }
         echo '</ul>';
     }
+    
+
 
 }
 
-add_action('save_post', 'os_save_slider_taxonomies');
+// add_action('save_post', 'os_save_slider_taxonomies');
+// function os_save_slider_taxonomies($post_id)
+// {
+//     if (get_post_type($post_id) !== 'os_slider') {
+//         return;
+//     }
 
-function os_save_slider_taxonomies($post_id)
-{
-    // Check if the post type is `os_slider`.
-    if (get_post_type($post_id) !== 'os_slider') {
-        return;
-    }
+//     if (!isset($_POST['os_slider_nonce']) || !wp_verify_nonce($_POST['os_slider_nonce'], 'os_slider_nonce_action')) {
+//         error_log('Nonce verification failed.');
+//         return;
+//     }
 
-    // Verify the nonce to ensure the request is valid.
-    if (!isset($_POST['os_slider_nonce']) || !wp_verify_nonce($_POST['os_slider_nonce'], 'os_slider_nonce_action')) {
-        return;
-    }
+//     if (!current_user_can('edit_post', $post_id)) {
+//         error_log('User does not have permission to edit this post.');
+//         return;
+//     }
 
-    // Check if the user has permission to edit the post.
-    if (!current_user_can('edit_post', $post_id)) {
-        return;
-    }
 
-    error_log(print_r($_POST, true));
-    // Check if the taxonomies are set in the POST data and assign terms.
-    if (isset($_POST['os_slider_type'])) {
-        $slider_type = sanitize_text_field($_POST['os_slider_type']);
-        wp_set_post_terms($post_id, array($slider_type), 'os_slider_type', false);
-    }
+// }
 
-    if (isset($_POST['os_slider_template'])) {
-        $slider_template = sanitize_text_field($_POST['os_slider_template']);
-        wp_set_post_terms($post_id, array($slider_template), 'os_slider_template', false);
-    }
-}
 
 
 /**

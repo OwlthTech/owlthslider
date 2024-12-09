@@ -102,118 +102,43 @@ class Owlthslider_Admin
 		}
 	}
 
-
-	/**
-	 * Register Custom Post Type for Sliders.
-	 */
 	public function os_register_slider_cpt_and_taxonomy()
 	{
-		$cpt_slug = 'os_slider';
-		$this->os_register_cpt($cpt_slug);
-	}
-
-	/**
-	 * Register Custom Post Type for Sliders.
-	 */
-	private function os_register_cpt($cpt_slug)
-	{
+		// Register the CPT
 		$labels = array(
 			'name' => __('Sliders', 'owlthslider'),
 			'singular_name' => __('Slider', 'owlthslider'),
 			'menu_name' => __('Owlth Sliders', 'owlthslider'),
-			'add_new' => __('Add New Slider', 'owlthslider'),
-			'add_new_item' => __('Add New Slider', 'owlthslider'),
-			'edit_item' => __('Edit Slider', 'owlthslider'),
-			'new_item' => __('New Slider', 'owlthslider'),
-			'view_item' => __('View Slider', 'owlthslider'),
-			'view_items' => __('View Sliders', 'owlthslider'),
-			'all_items' => __('All Sliders', 'owlthslider'),
-			'search_items' => __('Search Sliders', 'owlthslider'),
 		);
 
 		$args = array(
 			'labels' => $labels,
 			'public' => true,
 			'show_ui' => true,
-			'show_in_menu' => true,
 			'show_in_rest' => true,
-			'rest_base' => 'os_slider',
-			'query_var' => true,
-			'rewrite' => array('slug' => 'slider', 'with_front' => true),
-			'capability_type' => 'post',
-			'has_archive' => false,
-			'hierarchical' => false,
 			'supports' => array('title', 'custom-fields'),
 			'taxonomies' => array('os_slider_type', 'os_slider_template'),
 		);
 
+		register_post_type('os_slider', $args);
 
-		register_post_type($cpt_slug, $args);
-
-		$this->os_register_taxonomy($cpt_slug);
-	}
-
-
-	private function os_register_taxonomy($cpt_slug)
-	{
-
-		// Predefine categories for Slider Types
-		$slider_types = array(
-			'Default',
-			'Carousel',
-			'Reviews',
-			'Products'
-		);
-
-		$slider_templates = array(
-			'Default',
-			'Carousel-1',
-			'Carousel-2',
-			'Carousel-3',
-			'Reviews-1',
-			'Reviews-2',
-			'Reviews-3',
-			'Products-1',
-			'Products-2',
-			'Products-3'
-		);
-
+		// Register Taxonomies
 		$slider_type_args = array(
 			'hierarchical' => true,
 			'show_ui' => true,
 			'show_in_rest' => true,
-			'show_in_menu' => false,
-			'show_admin_column' => true,
-			'query_var' => true,
-			'label' => 'Type',
-			// 'rewrite' => array('slug' => 'slider-type', 'with_front' => false),
+			'label' => __('Slider Type', 'owlthslider'),
 		);
 
 		$slider_template_args = array(
 			'hierarchical' => true,
 			'show_ui' => true,
 			'show_in_rest' => true,
-			'show_in_menu' => false,
-			'show_admin_column' => true,
-			'query_var' => true,
-			'label' => 'Template',
-			// 'rewrite' => array('slug' => 'slider-template'),
+			'label' => __('Slider Template', 'owlthslider'),
 		);
 
-		register_taxonomy('os_slider_type', array($cpt_slug), $slider_type_args);
-		register_taxonomy('os_slider_template', array($cpt_slug), $slider_template_args);
-
-		foreach ($slider_types as $type) {
-			if (!term_exists($type, 'os_slider_type')) {
-				wp_insert_term($type, 'os_slider_type');
-			}
-		}
-
-		foreach ($slider_templates as $template) {
-			if (!term_exists($template, 'os_slider_template')) {
-				wp_insert_term($template, 'os_slider_template');
-			}
-		}
+		register_taxonomy('os_slider_type', 'os_slider', $slider_type_args);
+		register_taxonomy('os_slider_template', 'os_slider', $slider_template_args);
 	}
 
 
