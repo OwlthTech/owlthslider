@@ -214,7 +214,7 @@ jQuery(document).ready(($) => {
 		});
 	}, 1000); // Adjust the debounce delay as needed
 
-	$('#post').on('change input', 'input, select, textarea', autoSaveSlider);
+	$('#os_slider_details').on('change input', 'input, select, textarea', autoSaveSlider);
 
 });
 

@@ -82,6 +82,7 @@ function os_get_slides_schema()
                     'properties' => array_merge($common_fields, array(
                         'author_details' => array(
                             'type' => 'object',
+                            'classes' => 'heading-column',
                             'label' => __('Author Details', 'owlthslider'),
                             'properties' => array(
                                 'author_name' => array(
@@ -103,21 +104,21 @@ function os_get_slides_schema()
                             'label' => __('Rating', 'owlthslider'),
                             'default' => 5.0,
                             'sanitize_callback' => 'floatval',
-                            'classes' => 'cb-column'
+                            'classes' => 'rating-column'
                         ),
                         'review_body' => array(
                             'type' => 'wp_editor',
                             'label' => __('Review Body', 'owlthslider'),
                             'default' => '',
                             'sanitize_callback' => 'wp_kses_post',
-                            'classes' => 'cb-column'
+                            'classes' => 'caption-column'
                         ),
                         'review_date' => array(
                             'type' => 'date',
                             'label' => __('Review Date', 'owlthslider'),
                             'default' => '',
                             'sanitize_callback' => 'sanitize_text_field',
-                            'classes' => 'cb-column'
+                            'classes' => 'cta-column'
                         ),
                     )),
                 ),

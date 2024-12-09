@@ -21,12 +21,14 @@
  * @author     Owlth Tech <nil@owlth.tech>
  */
 
+require_once plugin_dir_path(__FILE__) . 'schema.php';
 
-require_once plugin_dir_path(__FILE__) . 'functions/slider/index.php';
-require_once plugin_dir_path(__FILE__) . 'functions/reviews/index.php';
+require_once plugin_dir_path(__FILE__) . 'includes/slider/index.php';
+require_once plugin_dir_path(__FILE__) . 'includes/reviews/index.php';
 
 // Metaboxes
-require_once plugin_dir_path(dirname(__FILE__)) . 'admin/includes/class-owlthslider-metaboxes.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-owlthslider-metaboxes.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-slider-post-table.php';
 
 class Owlthslider_Admin
 {
@@ -35,6 +37,8 @@ class Owlthslider_Admin
 	private $version;
 
 	private $plugin_metaboxes;
+
+	private $slider_post_table;
 	public function __construct($plugin_name, $version)
 	{
 
@@ -44,15 +48,9 @@ class Owlthslider_Admin
 		add_action('wp_ajax_os_auto_save_sliders', 'os_save_data_ajax');
 		add_action('save_post_os_slider', 'test_os_save_data');
 
-		// add_action('wp_ajax_os_refresh_reviews', array($this, 'os_ajax_refresh_reviews'));
-
-		add_filter('manage_os_slider_posts_columns', array($this, 'os_add_shortcode_column'));
-		add_action('manage_os_slider_posts_custom_column', array($this, 'os_shortcode_column_content'), 10, 2);
-
-
 		// Metaboxes - remove and add
-		$this->plugin_metaboxes = new Class_Owlthslider_Metaboxes();
-
+		$this->plugin_metaboxes = new Owlthslider_Metaboxes();
+		$this->slider_post_table = new Slider_Post_Table();
 	}
 
 
@@ -108,93 +106,121 @@ class Owlthslider_Admin
 	/**
 	 * Register Custom Post Type for Sliders.
 	 */
-	function os_register_slider_cpt_and_taxonomy()
+	public function os_register_slider_cpt_and_taxonomy()
 	{
 		$cpt_slug = 'os_slider';
-		$cpt_taxonomies = ['os_slider_type'];
-		os_register_cpt($cpt_slug, $cpt_taxonomies);
+		$this->os_register_cpt($cpt_slug);
 	}
-
-
-
-
 
 	/**
-	 * Admin: Adds column in post table
-	 * @param mixed $columns
-	 * @return mixed
+	 * Register Custom Post Type for Sliders.
 	 */
-	function os_add_shortcode_column($columns)
+	private function os_register_cpt($cpt_slug)
 	{
-		$columns['os_slider_shortcode'] = __('Shortcode', 'owlthslider');
-		return $columns;
+		$labels = array(
+			'name' => __('Sliders', 'owlthslider'),
+			'singular_name' => __('Slider', 'owlthslider'),
+			'menu_name' => __('Owlth Sliders', 'owlthslider'),
+			'add_new' => __('Add New Slider', 'owlthslider'),
+			'add_new_item' => __('Add New Slider', 'owlthslider'),
+			'edit_item' => __('Edit Slider', 'owlthslider'),
+			'new_item' => __('New Slider', 'owlthslider'),
+			'view_item' => __('View Slider', 'owlthslider'),
+			'view_items' => __('View Sliders', 'owlthslider'),
+			'all_items' => __('All Sliders', 'owlthslider'),
+			'search_items' => __('Search Sliders', 'owlthslider'),
+		);
+
+		$args = array(
+			'labels' => $labels,
+			'public' => true,
+			'show_ui' => true,
+			'show_in_menu' => true,
+			'show_in_rest' => true,
+			'rest_base' => 'os_slider',
+			'query_var' => true,
+			'rewrite' => array('slug' => 'slider', 'with_front' => true),
+			'capability_type' => 'post',
+			'has_archive' => false,
+			'hierarchical' => false,
+			'supports' => array('title', 'custom-fields'),
+			'taxonomies' => array('os_slider_type', 'os_slider_template'),
+		);
+
+
+		register_post_type($cpt_slug, $args);
+
+		$this->os_register_taxonomy($cpt_slug);
 	}
 
 
-	/**
-	 * Admin: Adds content in column of post table
-	 * @param mixed $column
-	 * @param mixed $post_id
-	 * @return void
-	 */
-	function os_shortcode_column_content($column, $post_id)
+	private function os_register_taxonomy($cpt_slug)
 	{
-		if ('os_slider_shortcode' === $column) {
-			$shortcode = '[os_slider id="' . $post_id . '"]';
-			echo '<input type="text" readonly="readonly" value="' . esc_attr($shortcode) . '" class="os-slider-shortcode" onclick="this.select();document.execCommand(\'copy\');alert(\'Shortcode copied to clipboard\');" />';
+
+		// Predefine categories for Slider Types
+		$slider_types = array(
+			'Default',
+			'Carousel',
+			'Reviews',
+			'Products'
+		);
+
+		$slider_templates = array(
+			'Default',
+			'Carousel-1',
+			'Carousel-2',
+			'Carousel-3',
+			'Reviews-1',
+			'Reviews-2',
+			'Reviews-3',
+			'Products-1',
+			'Products-2',
+			'Products-3'
+		);
+
+		$slider_type_args = array(
+			'hierarchical' => true,
+			'show_ui' => true,
+			'show_in_rest' => true,
+			'show_in_menu' => false,
+			'show_admin_column' => true,
+			'query_var' => true,
+			'label' => 'Type',
+			// 'rewrite' => array('slug' => 'slider-type', 'with_front' => false),
+		);
+
+		$slider_template_args = array(
+			'hierarchical' => true,
+			'show_ui' => true,
+			'show_in_rest' => true,
+			'show_in_menu' => false,
+			'show_admin_column' => true,
+			'query_var' => true,
+			'label' => 'Template',
+			// 'rewrite' => array('slug' => 'slider-template'),
+		);
+
+		register_taxonomy('os_slider_type', array($cpt_slug), $slider_type_args);
+		register_taxonomy('os_slider_template', array($cpt_slug), $slider_template_args);
+
+		foreach ($slider_types as $type) {
+			if (!term_exists($type, 'os_slider_type')) {
+				wp_insert_term($type, 'os_slider_type');
+			}
+		}
+
+		foreach ($slider_templates as $template) {
+			if (!term_exists($template, 'os_slider_template')) {
+				wp_insert_term($template, 'os_slider_template');
+			}
 		}
 	}
 
 
-	/**
-	 * Handle AJAX request to refresh reviews.
-	 */
-	public function os_ajax_refresh_reviews()
+	public function redirect_new_slider_to_type_selection()
 	{
-		// Verify the universal nonce
-		if (
-			!isset($_POST['os_slider_universal_nonce']) ||
-			!wp_verify_nonce($_POST['os_slider_universal_nonce'], 'os_save_slider_universal_nonce_action')
-		) {
-			wp_send_json_error(__('Unauthorized request.', 'owlthslider'), 403);
-		}
-
-		// Get and sanitize post ID
-		$post_id = intval($_POST['post_id']);
-		if (!$post_id || !current_user_can('edit_post', $post_id)) {
-			wp_send_json_error(__('Unauthorized user or invalid post ID.', 'owlthslider'), 403);
-		}
-
-		// Get and sanitize Google Place ID
-		$google_place_id = isset($_POST['google_place_id']) ? sanitize_text_field($_POST['google_place_id']) : '';
-		if (empty($google_place_id)) {
-			wp_send_json_error(__('Google Place ID is required.', 'owlthslider'), 400);
-		}
-
-		// Delete existing transient to force re-fetch
-		$transient_key = 'owlth_google_reviews_' . md5($google_place_id);
-		// delete_transient($transient_key);
-
-		// Fetch fresh reviews
-		$reviews = os_fetch_google_reviews($google_place_id, true);
-
-		if (empty($reviews)) {
-			wp_send_json_error(__('No reviews found or failed to fetch reviews.', 'owlthslider'), 400);
-		}
-
-		// Render the updated reviews table
-		ob_start();
-		$this->plugin_metaboxes->os_render_reviews_table($post_id, $google_place_id, true);
-		$table_html = ob_get_clean();
-
-		wp_send_json_success($table_html);
-	}
-
-	
-	
-	public function redirect_new_slider_to_type_selection() {
 		global $pagenow;
-	
+
 		if (
 			$pagenow === 'post-new.php' &&
 			isset($_GET['post_type']) &&
@@ -205,9 +231,10 @@ class Owlthslider_Admin
 			exit;
 		}
 	}
-	
 
-	public function add_slider_type_selection_page() {
+
+	public function add_slider_type_selection_page()
+	{
 		add_submenu_page(
 			'', // No parent menu, hidden from navigation
 			__('Select Slider Type', 'owlthslider'),
@@ -217,13 +244,19 @@ class Owlthslider_Admin
 			array($this, 'os_render_slider_type_selection_page')
 		);
 	}
-	
-	public function os_render_slider_type_selection_page() {
+
+	public function os_render_slider_type_selection_page()
+	{
 		$slider_types = get_terms(array(
 			'taxonomy' => 'os_slider_type',
 			'hide_empty' => false,
 		));
-	
+
+		$slider_templates = get_terms(array(
+			'taxonomy' => 'os_slider_template',
+			'hide_empty' => false,
+		));
+
 		if (empty($slider_types) || is_wp_error($slider_types)) {
 			echo '<div class="wrap">';
 			echo '<h1>' . __('Select Slider Type', 'owlthslider') . '</h1>';
@@ -231,6 +264,15 @@ class Owlthslider_Admin
 			echo '</div>';
 			return;
 		}
+
+		if (empty($slider_templates) || is_wp_error($slider_templates)) {
+			echo '<div class="wrap">';
+			echo '<h1>' . __('Select Slider Templates', 'owlthslider') . '</h1>';
+			echo '<p>' . __('No slider types available. Please create a slider type first.', 'owlthslider') . '</p>';
+			echo '</div>';
+			return;
+		}
+
 		?>
 		<div class="wrap" id="slide-selection">
 			<h1><?php _e('Select Slider Type', 'owlthslider'); ?></h1>
@@ -240,24 +282,39 @@ class Owlthslider_Admin
 				<div class="slider-types">
 					<?php foreach ($slider_types as $type): ?>
 						<label class="form-control" for="os_slider_type_<?php echo esc_attr($type->term_id); ?>">
-							<input type="radio" id="os_slider_type_<?php echo esc_attr($type->term_id); ?>" name="os_slider_type"
-								value="<?php echo esc_attr($type->term_id); ?>" required />
+							<input type="radio" id="os_slider_type_<?php echo esc_attr($type->term_id); ?>"
+								name="os_slider_type" value="<?php echo esc_attr($type->term_id); ?>" required />
 							<span><?php echo esc_html($type->name); ?></span>
 						</label>
 					<?php endforeach; ?>
 				</div>
+
+				<div class="slider-templates">
+					<?php foreach ($slider_templates as $template): ?>
+						<label class="form-control" for="os_slider_template_<?php echo esc_attr($template->term_id); ?>">
+							<input type="radio" id="os_slider_template_<?php echo esc_attr($template->term_id); ?>"
+								name="os_slider_template" value="<?php echo esc_attr($template->term_id); ?>" required />
+							<span><?php echo esc_html($template->name); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+
 				<?php submit_button(__('Create Slider', 'owlthslider')); ?>
 			</form>
 		</div>
 		<style>
-			.php-error #adminmenuback, .php-error #adminmenuwrap {margin-top: unset}
+			.php-error #adminmenuback,
+			.php-error #adminmenuwrap {
+				margin-top: unset
+			}
 		</style>
 		<?php
 	}
-	
-	
-	
-	public function handle_os_slider_creation() {
+
+
+
+	public function handle_os_slider_creation()
+	{
 		// Verify nonce for security
 		if (
 			!isset($_POST['os_slider_type_nonce']) ||
@@ -265,31 +322,40 @@ class Owlthslider_Admin
 		) {
 			wp_die(__('Nonce verification failed', 'owlthslider'));
 		}
-	
+
 		// Validate and sanitize taxonomy
 		$slider_type = intval($_POST['os_slider_type']);
-		$term = get_term($slider_type, 'os_slider_type');
-	
-		if (!$term || is_wp_error($term)) {
+		$term_type = get_term($slider_type, 'os_slider_type');
+
+		if (!$term_type || is_wp_error($term_type)) {
 			wp_die(__('Invalid slider type selected', 'owlthslider'));
 		}
-	
+
+		// Validate and sanitize taxonomy
+		$slider_template = intval($_POST['os_slider_template']);
+		$term_template = get_term($slider_template, 'os_slider_template');
+
+		if (!$term_template || is_wp_error($term_template)) {
+			wp_die(__('Invalid slider template selected', 'owlthslider'));
+		}
+
 		// Create the custom post type post
 		$new_slider = array(
 			'post_type' => 'os_slider',
 			'post_status' => 'auto-draft',
 			'post_title' => __('Auto Draft Slider', 'owlthslider'),
 		);
-	
+
 		$post_id = wp_insert_post($new_slider);
-	
+
 		if (is_wp_error($post_id)) {
 			wp_die(__('Failed to create new slider', 'owlthslider'));
 		}
-	
+
 		// Assign taxonomy
 		wp_set_post_terms($post_id, array($slider_type), 'os_slider_type', false);
-	
+		wp_set_post_terms($post_id, array($slider_template), 'os_slider_template', false);
+
 		// Redirect to the edit screen of the newly created post
 		wp_safe_redirect(admin_url("post.php?post={$post_id}&action=edit"));
 		exit;

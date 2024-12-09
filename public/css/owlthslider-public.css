@@ -22,7 +22,7 @@
     transform: translate3d(0, 0, 0);
     flex: 0 0 var(--slide-size);
     min-width: 0;
-    background-color: blueviolet;
+    background-color: #d5d5d5;
     box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
     display: flex;
     align-items: center;

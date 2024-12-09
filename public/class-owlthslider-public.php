@@ -80,7 +80,7 @@ class Owlthslider_Public
 	public function os_render_slider_in_preview($content)
 	{
 		global $post;
-		
+
 		// Check if it's a preview, the post type is 'os_slider', and we're viewing in admin or front-end preview
 		if (is_preview() && $post && $post->post_type === 'os_slider') {
 			// Generate the shortcode for the current slider
@@ -119,43 +119,82 @@ class Owlthslider_Public
 			return ''; // No slider data found.
 		}
 
+		// Determine slider type from taxonomy
+		$terms = wp_get_post_terms($post_id, 'os_slider_type');
+		$slider_type = isset($terms[0]) ? $terms[0]->slug : 'default';
+
 		// Slider settings
 		$slider_options = get_post_meta($post_id, 'os_slider_options', true);
-
-		$slider_type = isset($slider_options['os_slider_autoplay']) ? 'autoplay' : 'autoscroll';
+		$slider_options = is_array($slider_options) ? $slider_options : array();
 
 		ob_start();
-		?>
-		<div class="os-slider embla" <?php echo (($slider_type === 'autoplay')) ? ' data-autoplay="yes"' : 'data-autoscroll="yes"'; ?> data-loop="true">
-			<div class="os-slider__viewport">
-				<div class="os-slider__container">
-					<?php foreach ($slider_data as $data): ?>
-						<?php if ($data['enabled']): ?>
-							<div class="os-slider__slide" style="background-image: url('');">
-								<div class="embla__parallax">
-									<div class="embla__parallax__layer">
-										<div class="overlay"></div>
-										<img class="embla__parallax__img" src="<?php echo esc_url($data['background_image']); ?>" alt=""
-											srcset="">
+
+		// Render slider based on taxonomy type
+		switch ($slider_type) {
+			case 'reviews':
+				?>
+				<div class="os-slider embla" <?php echo isset($slider_options['os_slider_autoplay']) ? 'data-autoplay="yes"' : 'data-autoscroll="yes"'; ?> data-loop="true">
+					<div class="os-slider__viewport">
+						<div class="os-slider__container">
+							<?php foreach ($slider_data as $data): ?>
+								<?php if ($data['enabled']): ?>
+									<div class="os-slider__slide">
+										<div class="embla__parallax">
+											<div class="review-author">
+												<img src="<?php echo esc_url($data['author_details']['author_avatar']); ?>"
+													alt="<?php echo esc_attr($data['author_details']['author_name']); ?>">
+												<h3><?php echo esc_html($data['author_details']['author_name']); ?></h3>
+											</div>
+											<div class="review-content">
+												<p><?php echo esc_html($data['review_body']); ?></p>
+												<div class="review-meta">
+													<span class="review-rating"><?php echo esc_html($data['rating']); ?> ★</span>
+													<span class="review-date"><?php echo esc_html($data['review_date']); ?></span>
+												</div>
+											</div>
+										</div>
 									</div>
-									<div class="os-slider-content" style="color: white; z-index: 1;">
-										<h2><?php echo esc_html($data['heading']); ?></h2>
-										<p><?php echo $data['caption']; ?></p>
-										<?php if (isset($data['cta_details']['cta_text']) && isset($data['cta_details']['cta_link'])): ?>
-											<a href="<?php echo esc_url($data['cta_details']['cta_link']); ?>" class="os-slider-cta-button">
-												<?php echo esc_html($data['cta_details']['cta_text']); ?>
-											</a>
-										<?php endif; ?>
-									</div>
-								</div>
-							</div>
-						<?php endif; ?>
-					<?php endforeach; ?>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					</div>
 				</div>
-			</div>
-		</div>
-		<?php
+				<?php
+				break;
+
+			default: // Default slider type
+				?>
+				<div class="os-slider embla" <?php echo isset($slider_options['os_slider_autoplay']) ? 'data-autoplay="yes"' : 'data-autoscroll="yes"'; ?> data-loop="true">
+					<div class="os-slider__viewport">
+						<div class="os-slider__container">
+							<?php foreach ($slider_data as $data): ?>
+								<?php if ($data['enabled']): ?>
+									<div class="os-slider__slide"
+										style="background-image: url('<?php echo esc_url($data['background_image']); ?>');">
+										<div class="embla__parallax">
+											<div class="os-slider-content">
+												<h2><?php echo esc_html($data['heading']); ?></h2>
+												<p><?php echo $data['caption']; ?></p>
+												<?php if (isset($data['cta_details']['cta_text']) && isset($data['cta_details']['cta_link'])): ?>
+													<a href="<?php echo esc_url($data['cta_details']['cta_link']); ?>"
+														class="os-slider-cta-button">
+														<?php echo esc_html($data['cta_details']['cta_text']); ?>
+													</a>
+												<?php endif; ?>
+											</div>
+										</div>
+									</div>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				</div>
+				<?php
+				break;
+		}
+
 		return ob_get_clean();
 	}
+
 
 }

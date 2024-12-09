@@ -125,6 +125,10 @@ function os_sanitize_and_validate_options_meta( $post_id, $is_ajax, &$errors ) {
 }
 
 
+function os_sanitize_taxonomy( $post_id, $is_ajax, &$errors ) {
+
+}
+
 /**
  * Validate a field value based on its type.
  *
