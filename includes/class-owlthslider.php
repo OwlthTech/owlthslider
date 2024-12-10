@@ -173,7 +173,7 @@ class Owlthslider
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles_scripts');
 
 		// Register CPT & Taxonomies
-		$this->loader->add_action('init', $plugin_admin, callback: 'os_register_slider_cpt_and_taxonomy');
+		$this->loader->add_action('init', $plugin_admin, 'os_register_slider_cpt_and_taxonomy');
 
 		$this->loader->add_action('init', $plugin_admin, 'redirect_new_slider_to_type_selection');
 		$this->loader->add_action('admin_menu', $plugin_admin, 'add_slider_type_selection_page');

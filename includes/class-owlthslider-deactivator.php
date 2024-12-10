@@ -32,17 +32,14 @@ class Owlthslider_Deactivator {
 	public static function deactivate() {
 		// Default terms to remove
 		$default_slider_types = array('Default', 'Carousel', 'Reviews', 'Products');
-		$default_slider_templates = array(
-			'Default', 'Carousel-1', 'Carousel-2', 'Carousel-3',
-			'Reviews-1', 'Reviews-2', 'Reviews-3',
-			'Products-1', 'Products-2', 'Products-3'
-		);
+		$default_slider_templates = array('Default-1', 'Carousel-1', 'Reviews-1', 'Products-1');
 
 		// Remove default slider types
 		foreach ($default_slider_types as $type) {
 			$term = get_term_by('name', $type, 'os_slider_type');
 			if ($term && !is_wp_error($term)) {
 				wp_delete_term($term->term_id, 'os_slider_type');
+				error_log("Deleting slider_type: " . print_r($term, true));
 			}
 		}
 
@@ -51,6 +48,7 @@ class Owlthslider_Deactivator {
 			$term = get_term_by('name', $template, 'os_slider_template');
 			if ($term && !is_wp_error($term)) {
 				wp_delete_term($term->term_id, 'os_slider_template');
+				error_log("Deleting slider_templates: " . print_r($term, true));
 			}
 		}
 	}
